@@ -1,5 +1,5 @@
-// Updated API Client Configuration for Production
-// Update your src/api/authApi.js
+// Complete authApi.js with all required exports
+// Replace your src/api/authApi.js with this file
 
 import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
@@ -57,7 +57,7 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication service
+// Authentication services
 export const register = async (userData) => {
   try {
     const response = await api.post('/auth/register', userData);
@@ -79,6 +79,62 @@ export const login = async (email, password) => {
   }
 };
 
-// Rest of your API functions...
+export const logout = () => {
+  removeToken();
+};
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetPassword = async (token, password) => {
+  try {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const verifyEmail = async (token) => {
+  try {
+    const response = await api.get(`/auth/verify-email/${token}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  try {
+    const response = await api.post('/auth/change-password', { currentPassword, newPassword });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getProfile = async () => {
+  try {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateProfile = async (profileData) => {
+  try {
+    const response = await api.put('/auth/profile', profileData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export default api;
