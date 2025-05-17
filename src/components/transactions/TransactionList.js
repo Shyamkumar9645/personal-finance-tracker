@@ -1,4 +1,6 @@
 // src/components/transactions/TransactionList.js
+// Complete updated file with fixes for transaction summary stats
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getTransactions, deleteTransaction, exportTransactions } from '../../api/transactionsApi';
@@ -47,14 +49,41 @@ const TransactionList = () => {
         setLoading(true);
         setNoResults(false);
 
-        const { transactions: transactionsData, stats: statsData } = await getTransactions(filterParams);
+        const { transactions: transactionsData } = await getTransactions(filterParams);
 
         setTransactions(transactionsData || []);
-        if (statsData) {
-          setStats(statsData);
-        }
 
-        setNoResults(Array.isArray(transactionsData) && transactionsData.length === 0);
+        // Calculate stats directly from transactions
+        if (Array.isArray(transactionsData)) {
+          let totalReceived = 0;
+          let totalGiven = 0;
+
+          transactionsData.forEach(transaction => {
+            const amount = parseFloat(transaction.amount);
+            if (transaction.isMoneyReceived) {
+              totalReceived += amount;
+            } else {
+              totalGiven += amount;
+            }
+          });
+
+          setStats({
+            totalShowing: transactionsData.length,
+            totalReceived: totalReceived,
+            totalGiven: totalGiven,
+            totalAmount: totalReceived - totalGiven
+          });
+
+          setNoResults(transactionsData.length === 0);
+        } else {
+          setStats({
+            totalShowing: 0,
+            totalReceived: 0,
+            totalGiven: 0,
+            totalAmount: 0
+          });
+          setNoResults(true);
+        }
       } catch (err) {
         console.error('Error fetching transactions:', err);
         setError('Failed to load transactions. Please try again.');
@@ -209,7 +238,7 @@ const TransactionList = () => {
       </div>
 
       {/* Transactions Summary */}
-      {stats && transactions.length > 0 && (
+      {transactions.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="card p-4 bg-secondary-50">
             <div className="text-sm text-secondary-500 mb-1">Showing</div>

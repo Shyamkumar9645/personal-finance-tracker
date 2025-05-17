@@ -20,25 +20,75 @@ const Dashboard = () => {
         setLoading(true);
         const { stats: fetchedStats } = await getDashboardStats();
 
-        // Ensure we have all required properties with defaults if not provided
+        // Process topGivers and topReceivers into proper format
+        if (fetchedStats.topGivers && Array.isArray(fetchedStats.topGivers)) {
+          fetchedStats.topCreditors = fetchedStats.topGivers.map(item => ({
+            id: item.personId,
+            name: item.Person?.name || 'Unknown',
+            balance: parseFloat(item.total || 0)
+          }));
+        }
+
+        if (fetchedStats.topReceivers && Array.isArray(fetchedStats.topReceivers)) {
+          fetchedStats.topDebtors = fetchedStats.topReceivers.map(item => ({
+            id: item.personId,
+            name: item.Person?.name || 'Unknown',
+            balance: -parseFloat(item.total || 0) // Negative for debtors
+          }));
+        }
+
+        // Ensure we have all required properties with defaults
         const processedStats = {
-          balance: 0,
-          totalGiven: 0,
-          totalReceived: 0,
+          balance: fetchedStats.balance || 0,
+          totalGiven: fetchedStats.totalGiven || 0,
+          totalReceived: fetchedStats.totalReceived || 0,
           receivedCount: 0,
           givenCount: 0,
-          recentTransactions: [],
-          monthlyData: [],
-          topCreditors: [],
-          topDebtors: [],
-          ...fetchedStats
+          recentTransactions: fetchedStats.recentTransactions || [],
+          topCreditors: fetchedStats.topCreditors || [],
+          topDebtors: fetchedStats.topDebtors || [],
+          transactionsByMonth: fetchedStats.transactionsByMonth || []
         };
 
         setStats(processedStats);
 
-        // Prepare chart data if monthly data exists
-        if (processedStats.monthlyData && processedStats.monthlyData.length) {
-          setChartData(processedStats.monthlyData);
+        // Prepare chart data from transactionsByMonth
+        if (fetchedStats.transactionsByMonth && fetchedStats.transactionsByMonth.length) {
+          const processedChartData = [];
+          const monthsData = {};
+
+          // First pass to organize data by month
+          fetchedStats.transactionsByMonth.forEach(item => {
+            const date = new Date(item.month);
+            const monthKey = date.toISOString().split('T')[0].substring(0, 7); // YYYY-MM format
+
+            if (!monthsData[monthKey]) {
+              monthsData[monthKey] = {
+                month: monthKey,
+                monthName: date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+                shortMonth: date.toLocaleDateString('en-US', { month: 'short' }),
+                received: 0,
+                given: 0
+              };
+            }
+
+            // Add amount to the appropriate category
+            if (item.isMoneyReceived) {
+              monthsData[monthKey].received += parseFloat(item.total || 0);
+            } else {
+              monthsData[monthKey].given += parseFloat(item.total || 0);
+            }
+          });
+
+          // Convert to array and sort by month
+          const chartDataArray = Object.values(monthsData).sort((a, b) => a.month.localeCompare(b.month));
+
+          // Add net balance calculation
+          chartDataArray.forEach(item => {
+            item.net = item.received - item.given;
+          });
+
+          setChartData(chartDataArray);
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -309,17 +359,18 @@ const Dashboard = () => {
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                         <XAxis
-                          dataKey="month"
+                          dataKey="monthName"
                           stroke="#64748b"
                           tick={{ fontSize: 12 }}
                         />
                         <YAxis
                           stroke="#64748b"
                           tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => `${value}`}
+                          tickFormatter={(value) => `$${Math.abs(value)}`}
                         />
                         <Tooltip
-                          formatter={(value) => [`${value}`, '']}
+                          formatter={(value) => [`$${Math.abs(value).toFixed(2)}`, '']}
+                          labelFormatter={(value) => `${value}`}
                           contentStyle={{
                             borderRadius: '0.5rem',
                             border: 'none',

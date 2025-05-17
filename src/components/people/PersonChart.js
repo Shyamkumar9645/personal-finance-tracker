@@ -14,6 +14,8 @@ const PersonChart = ({ data }) => {
     const monthlyData = {};
 
     data.forEach(item => {
+      if (!item.transactionDate) return;
+
       const date = new Date(item.transactionDate);
       const month = date.toISOString().substring(0, 7); // Format: YYYY-MM
 
@@ -26,10 +28,11 @@ const PersonChart = ({ data }) => {
         };
       }
 
+      const amount = parseFloat(item.amount || 0);
       if (item.isMoneyReceived) {
-        monthlyData[month].received += parseFloat(item.amount);
+        monthlyData[month].received += amount;
       } else {
-        monthlyData[month].given += parseFloat(item.amount);
+        monthlyData[month].given += amount;
       }
 
       // Calculate net amount
