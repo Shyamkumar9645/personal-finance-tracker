@@ -2,7 +2,7 @@
   "name": "personal-finance-tracker",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://Shyamkumar9645.github.io/personal-finance-tracker",
+  "homepage": "/personal-finance-tracker",
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
