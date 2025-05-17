@@ -1,5 +1,6 @@
+// src/components/transactions/TransactionForm.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { createTransaction, getTransaction, updateTransaction } from '../../api/transactionsApi';
 import { getPeople } from '../../api/peopleApi';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -20,16 +21,28 @@ const TransactionForm = () => {
 
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isEdit, setIsEdit] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
+
+  // Extract personId from URL query if available
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const personId = query.get('personId');
+    if (personId) {
+      setFormData(prev => ({ ...prev, personId }));
+    }
+  }, [location]);
 
   // Load people and transaction data if editing
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        setLoading(true);
+        setInitialLoading(true);
 
         // Fetch people
         const { people: peopleData } = await getPeople();
@@ -55,7 +68,7 @@ const TransactionForm = () => {
         console.error('Error fetching initial data:', err);
         setError('Failed to load data. Please try again.');
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
 
@@ -73,6 +86,7 @@ const TransactionForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     // Validate form
     if (!formData.personId || !formData.amount || !formData.transactionDate) {
@@ -91,12 +105,34 @@ const TransactionForm = () => {
 
       if (isEdit) {
         await updateTransaction(id, transactionData);
+        setSuccess('Transaction updated successfully!');
       } else {
         await createTransaction(transactionData);
+        setSuccess('Transaction added successfully!');
+
+        // Reset form if not editing
+        if (!isEdit) {
+          setFormData({
+            ...formData,
+            amount: '',
+            description: '',
+            category: '',
+            paymentMethod: '',
+            isSettled: false,
+            reminderDate: ''
+          });
+        }
       }
 
-      // Redirect back to transactions list
-      navigate('/transactions');
+      // Redirect after a short delay to show success message
+      setTimeout(() => {
+        if (isEdit || !formData.personId) {
+          navigate('/transactions');
+        } else {
+          // If adding from person details, go back to that person
+          navigate(`/people/${formData.personId}`);
+        }
+      }, 1500);
     } catch (err) {
       console.error('Error saving transaction:', err);
       setError(err.response?.data?.error || 'Failed to save transaction. Please try again.');
@@ -105,24 +141,63 @@ const TransactionForm = () => {
     }
   };
 
-  if (loading && !formData.personId) {
+  if (initialLoading) {
     return <LoadingSpinner />;
   }
 
+  // Get current person name
+  const currentPersonName = formData.personId
+    ? people.find(p => p.id === formData.personId)?.name || 'Selected Person'
+    : '';
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        {isEdit ? 'Edit Transaction' : 'Add New Transaction'}
-      </h1>
+    <div className="container mx-auto px-4 py-6 animate-fade-in">
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center text-primary-600 hover:text-primary-800"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back
+        </button>
+      </div>
 
-      {error && <ErrorAlert message={error} className="mb-6" />}
+      <div className="card max-w-3xl mx-auto">
+        <div className="card-header">
+          <h1 className="text-xl font-bold text-secondary-900">
+            {isEdit ? 'Edit Transaction' : 'Add New Transaction'}
+          </h1>
+          {formData.personId && (
+            <p className="text-secondary-500 mt-1">
+              For <span className="font-medium text-secondary-700">{currentPersonName}</span>
+            </p>
+          )}
+        </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <form onSubmit={handleSubmit}>
+        {error && <ErrorAlert message={error} className="mx-6 mt-6" />}
+
+        {success && (
+          <div className="mx-6 mt-6 bg-success-50 border-l-4 border-success-500 p-4 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-success-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-success-700">{success}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="card-body">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label htmlFor="personId" className="block text-sm font-medium text-gray-700 mb-1">
-                Person <span className="text-red-500">*</span>
+              <label htmlFor="personId" className="form-label">
+                Person <span className="text-danger-500">*</span>
               </label>
               <select
                 id="personId"
@@ -130,7 +205,8 @@ const TransactionForm = () => {
                 value={formData.personId}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="form-input"
+                disabled={!!location.search.includes('personId=')}
               >
                 <option value="">Select a person</option>
                 {people.map((person) => (
@@ -139,11 +215,16 @@ const TransactionForm = () => {
                   </option>
                 ))}
               </select>
+              {people.length === 0 && (
+                <p className="mt-1 text-xs text-danger-600">
+                  No people found. Please add a person first.
+                </p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="transactionDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Transaction Date <span className="text-red-500">*</span>
+              <label htmlFor="transactionDate" className="form-label">
+                Transaction Date <span className="text-danger-500">*</span>
               </label>
               <input
                 type="date"
@@ -152,63 +233,69 @@ const TransactionForm = () => {
                 value={formData.transactionDate}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="form-input"
               />
             </div>
 
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
-                Amount <span className="text-red-500">*</span>
+              <label htmlFor="amount" className="form-label">
+                Amount <span className="text-danger-500">*</span>
               </label>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                required
-                min="0.01"
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Transaction Type <span className="text-red-500">*</span>
-              </label>
-              <div className="flex space-x-4">
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="typeReceived"
-                    name="isMoneyReceived"
-                    checked={formData.isMoneyReceived === true}
-                    onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: true }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  />
-                  <label htmlFor="typeReceived" className="ml-2 text-sm text-gray-700">
-                    Money Received
-                  </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-secondary-500">$</span>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="typeGiven"
-                    name="isMoneyReceived"
-                    checked={formData.isMoneyReceived === false}
-                    onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: false }))}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  />
-                  <label htmlFor="typeGiven" className="ml-2 text-sm text-gray-700">
-                    Money Given
-                  </label>
-                </div>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  required
+                  min="0.01"
+                  step="0.01"
+                  className="form-input pl-8"
+                  placeholder="0.00"
+                />
               </div>
             </div>
 
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="form-label mb-3">
+                Transaction Type <span className="text-danger-500">*</span>
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="isMoneyReceived"
+                    checked={formData.isMoneyReceived === true}
+                    onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: true }))}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded-full"
+                  />
+                  <span className="ml-2 text-sm text-secondary-700">
+                    <span className="font-medium text-success-600">Money Received</span>
+                    <span className="ml-1 text-xs text-secondary-500">(they paid you)</span>
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="isMoneyReceived"
+                    checked={formData.isMoneyReceived === false}
+                    onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: false }))}
+                    className="h-4 w-4 text-danger-600 focus:ring-danger-500 border-secondary-300 rounded-full"
+                  />
+                  <span className="ml-2 text-sm text-secondary-700">
+                    <span className="font-medium text-danger-600">Money Given</span>
+                    <span className="ml-1 text-xs text-secondary-500">(you paid them)</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="category" className="form-label">
                 Category
               </label>
               <input
@@ -217,22 +304,31 @@ const TransactionForm = () => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="form-input"
+                placeholder="e.g. Lunch, Rent, Travel"
               />
             </div>
 
             <div>
-              <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="paymentMethod" className="form-label">
                 Payment Method
               </label>
-              <input
-                type="text"
+              <select
                 id="paymentMethod"
                 name="paymentMethod"
                 value={formData.paymentMethod}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
+                className="form-input"
+              >
+                <option value="">Select a payment method</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="UPI">UPI</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Digital Wallet">Digital Wallet</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
 
             <div className="flex items-center">
@@ -242,16 +338,17 @@ const TransactionForm = () => {
                 name="isSettled"
                 checked={formData.isSettled}
                 onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
               />
-              <label htmlFor="isSettled" className="ml-2 text-sm text-gray-700">
+              <label htmlFor="isSettled" className="ml-2 text-sm text-secondary-700">
                 This transaction is settled (debt is paid)
               </label>
             </div>
 
             <div>
-              <label htmlFor="reminderDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Reminder Date (Optional)
+              <label htmlFor="reminderDate" className="form-label flex items-center">
+                <span>Reminder Date</span>
+                <span className="ml-2 text-xs text-secondary-500">(Optional)</span>
               </label>
               <input
                 type="date"
@@ -259,13 +356,15 @@ const TransactionForm = () => {
                 name="reminderDate"
                 value={formData.reminderDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="form-input"
+                min={new Date().toISOString().split('T')[0]}
               />
+              <p className="mt-1 text-xs text-secondary-500">Set a date to remind yourself about this transaction</p>
             </div>
           </div>
 
           <div className="mb-6">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="description" className="form-label">
               Description
             </label>
             <textarea
@@ -274,26 +373,41 @@ const TransactionForm = () => {
               value={formData.description}
               onChange={handleChange}
               rows="3"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="form-input"
+              placeholder="Add notes about this transaction"
             ></textarea>
           </div>
 
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={() => navigate('/transactions')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md"
+              onClick={() => navigate(-1)}
+              className="btn btn-secondary"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`${
-                loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-              } text-white font-medium py-2 px-4 rounded-md`}
+              className="btn btn-primary flex items-center"
             >
-              {loading ? 'Saving...' : isEdit ? 'Update Transaction' : 'Add Transaction'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {isEdit ? 'Update Transaction' : 'Save Transaction'}
+                </>
+              )}
             </button>
           </div>
         </form>
