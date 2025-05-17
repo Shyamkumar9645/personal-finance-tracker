@@ -1,11 +1,12 @@
-// Modified Frontend API Client without withCredentials
-// Update your src/api/authApi.js
+// src/api/authApi.js
 
 import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
 
-// API URL with fallback
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+// Get correct API URL based on environment
+// Since we're running into a 404, we likely have the wrong URL structure
+// Adjust this URL to match your actual backend deployment
+const API_URL = process.env.REACT_APP_API_URL || 'https://backend1223.netlify.app';
 
 console.log('Using API URL:', API_URL); // Debug logging
 
@@ -14,8 +15,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Remove withCredentials to simplify CORS
-  // withCredentials: true,
+  // Enable withCredentials for cross-origin requests with credentials
+  withCredentials: true,
 });
 
 // Add token to requests
