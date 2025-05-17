@@ -1,5 +1,5 @@
-// Complete authApi.js with all required exports
-// Replace your src/api/authApi.js with this file
+// Modified Frontend API Client without withCredentials
+// Update your src/api/authApi.js
 
 import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
@@ -14,8 +14,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Add withCredentials for CORS with credentials
-  withCredentials: true,
+  // Remove withCredentials to simplify CORS
+  // withCredentials: true,
 });
 
 // Add token to requests
