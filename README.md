@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+// README.md
+# Personal Finance Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack application for tracking personal finances, focusing on money given to and received from others.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- User authentication with email verification
+- Track money given to and received from people
+- Dashboard with analytics and visualizations
+- Person-specific transaction history
+- Export data as CSV
+- Secure storage with PostgreSQL
 
-### `npm start`
+## Technology Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Backend
+- Node.js with Express.js
+- PostgreSQL database
+- Sequelize ORM
+- JWT authentication
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Frontend
+- React.js
+- Tailwind CSS
+- Recharts for data visualization
+- React Router for navigation
 
-### `npm test`
+## Setup Instructions
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Prerequisites
+- Node.js (v14 or later)
+- PostgreSQL (v12 or later)
+- npm or yarn
 
-### `npm run build`
+### Backend Setup
+1. Clone the repository
+2. Navigate to the project backend directory
+3. Copy `.env.example` to `.env` and update with your configuration
+4. Install dependencies: `npm install`
+5. Run database migrations: `npx sequelize-cli db:migrate`
+6. Start the server: `npm run dev`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Frontend Setup
+1. Navigate to the project frontend directory
+2. Copy `.env.example` to `.env` and update with your configuration
+3. Install dependencies: `npm install`
+4. Start the development server: `npm start`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## API Documentation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Authentication Endpoints
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/verify-email/:token` - Verify email
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
+- `POST /api/auth/change-password` - Change password (protected)
+- `GET /api/auth/profile` - Get user profile (protected)
+- `PUT /api/auth/profile` - Update user profile (protected)
 
-### `npm run eject`
+### People Endpoints
+- `POST /api/people` - Create a person (protected)
+- `GET /api/people` - Get all people (protected)
+- `GET /api/people/top` - Get top people by balance (protected)
+- `GET /api/people/:id` - Get a specific person (protected)
+- `PUT /api/people/:id` - Update a person (protected)
+- `DELETE /api/people/:id` - Delete a person (protected)
+- `GET /api/people/:id/transactions` - Get all transactions for a person (protected)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Transaction Endpoints
+- `POST /api/transactions` - Create a transaction (protected)
+- `GET /api/transactions` - Get all transactions (protected)
+- `GET /api/transactions/export` - Export transactions as CSV (protected)
+- `GET /api/transactions/dashboard` - Get dashboard statistics (protected)
+- `GET /api/transactions/person/:personId/stats` - Get person-specific stats (protected)
+- `GET /api/transactions/:id` - Get a specific transaction (protected)
+- `PUT /api/transactions/:id` - Update a transaction (protected)
+- `DELETE /api/transactions/:id` - Delete a transaction (protected)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## License
+MIT
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Contributors
+[Your Name]
