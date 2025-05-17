@@ -1,27 +1,27 @@
-// src/api/authApi.js
+// src/api/authApi.js - Simple Fix
 
 import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
 
-// API URL with guaranteed /api prefix
+// API URL with correct prefix
 const API_URL = process.env.REACT_APP_API_URL || 'https://backend1223.netlify.app';
 const BASE_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
-console.log('Using API URL:', BASE_URL); // Debug logging
+console.log('Using API URL:', BASE_URL);
 
+// Create a basic API client WITHOUT withCredentials
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  // Enable withCredentials for cross-origin requests with credentials
-  withCredentials: true,
+  // IMPORTANT: Disable this to avoid CORS issues
+  withCredentials: false,
 });
 
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
-    // Log every request for debugging
     console.log(`Making ${config.method.toUpperCase()} request to: ${config.baseURL}${config.url}`);
 
     const token = getToken();
@@ -33,11 +33,10 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle authentication errors and display more detailed errors
+// Handle response errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Log detailed error information
     console.error('API Error:', {
       url: error.config?.url,
       method: error.config?.method,
@@ -47,7 +46,6 @@ api.interceptors.response.use(
     });
 
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Authentication error handling
       if (error.response.data?.error &&
           (error.response.data.error.includes('token') ||
            error.response.data.error.includes('log in') ||
