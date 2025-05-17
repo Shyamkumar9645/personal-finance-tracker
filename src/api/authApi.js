@@ -3,15 +3,14 @@
 import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
 
-// Get correct API URL based on environment
-// Since we're running into a 404, we likely have the wrong URL structure
-// Adjust this URL to match your actual backend deployment
+// API URL with guaranteed /api prefix
 const API_URL = process.env.REACT_APP_API_URL || 'https://backend1223.netlify.app';
+const BASE_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
-console.log('Using API URL:', API_URL); // Debug logging
+console.log('Using API URL:', BASE_URL); // Debug logging
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,6 +21,9 @@ const api = axios.create({
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
+    // Log every request for debugging
+    console.log(`Making ${config.method.toUpperCase()} request to: ${config.baseURL}${config.url}`);
+
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -46,7 +48,7 @@ api.interceptors.response.use(
 
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       // Authentication error handling
-      if (error.response.data.error &&
+      if (error.response.data?.error &&
           (error.response.data.error.includes('token') ||
            error.response.data.error.includes('log in') ||
            error.response.data.error.includes('authentication'))) {
@@ -70,12 +72,15 @@ export const register = async (userData) => {
 
 export const login = async (email, password) => {
   try {
+    console.log(`Attempting to login with email: ${email}`);
     const response = await api.post('/auth/login', { email, password });
+    console.log('Login response:', response.data);
     if (response.data.token) {
       setToken(response.data.token);
     }
     return response.data;
   } catch (error) {
+    console.error('Login error details:', error);
     throw error;
   }
 };
