@@ -1,7 +1,7 @@
 // src/components/transactions/SearchFilter.js
 import React, { useState } from 'react';
 
-const SearchFilter = ({ params, onChange, people }) => {
+const SearchFilter = ({ params, onChange, people, showInterestFilter = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleChange = (e) => {
@@ -17,6 +17,9 @@ const SearchFilter = ({ params, onChange, people }) => {
     onChange('isMoneyReceived', '');
     onChange('category', '');
     onChange('isSettled', '');
+    if (showInterestFilter) {
+      onChange('applyInterest', '');
+    }
   };
 
   return (
@@ -118,7 +121,7 @@ const SearchFilter = ({ params, onChange, people }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label htmlFor="category" className="form-label">
                 Category
@@ -167,6 +170,47 @@ const SearchFilter = ({ params, onChange, people }) => {
               </select>
             </div>
           </div>
+
+          {/* Interest Filter - only show if interest filter is enabled */}
+          {showInterestFilter && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label htmlFor="applyInterest" className="form-label">
+                  Interest Bearing
+                </label>
+                <select
+                  id="applyInterest"
+                  name="applyInterest"
+                  value={params.applyInterest}
+                  onChange={handleChange}
+                  className="form-input"
+                >
+                  <option value="">All Transactions</option>
+                  <option value="true">Interest Bearing Only</option>
+                  <option value="false">Non-Interest Bearing Only</option>
+                </select>
+              </div>
+
+              {params.applyInterest === 'true' && (
+                <div>
+                  <label htmlFor="interestType" className="form-label">
+                    Interest Type
+                  </label>
+                  <select
+                    id="interestType"
+                    name="interestType"
+                    value={params.interestType || ''}
+                    onChange={handleChange}
+                    className="form-input"
+                  >
+                    <option value="">All Types</option>
+                    <option value="simple">Simple Interest</option>
+                    <option value="compound">Compound Interest</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
