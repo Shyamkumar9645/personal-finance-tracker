@@ -22,6 +22,9 @@ const InterestSummary = () => {
           getPersonInterestSummary()
         ]);
 
+        // Log the data received to debug calculation issues
+        console.log('Interest summary data:', summaryData);
+
         setSummary(summaryData.summary);
         setPersonSummary(personSummaryData.personSummary);
       } catch (err) {

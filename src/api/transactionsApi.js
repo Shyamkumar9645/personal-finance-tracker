@@ -103,8 +103,38 @@ export const getTransaction = async (id) => {
 };
 
 export const updateTransaction = async (id, transactionData) => {
-  const response = await api.put(`/transactions/${id}`, transactionData);
-  return response.data;
+  try {
+    // Ensure proper data types before sending
+    const processedData = {
+      ...transactionData,
+      // Ensure boolean fields are explicitly boolean
+      isMoneyReceived: Boolean(transactionData.isMoneyReceived),
+      isSettled: Boolean(transactionData.isSettled),
+      applyInterest: Boolean(transactionData.applyInterest),
+      // Ensure numeric fields are numbers
+      amount: parseFloat(transactionData.amount),
+      interestRate: transactionData.interestRate !== undefined && transactionData.interestRate !== ''
+        ? parseFloat(transactionData.interestRate)
+        : null,
+      compoundFrequency: transactionData.compoundFrequency !== undefined && transactionData.compoundFrequency !== ''
+        ? parseInt(transactionData.compoundFrequency)
+        : null,
+    };
+
+    // Log the data being sent
+    console.log(`Updating transaction ${id} with data:`, processedData);
+
+    const response = await api.put(`/transactions/${id}`, processedData);
+
+    // Log the response received
+    console.log(`Update transaction ${id} response:`, response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('Update transaction API error:', error);
+    console.error('Error details:', error.response?.data);
+    throw error;
+  }
 };
 
 export const deleteTransaction = async (id) => {
