@@ -149,8 +149,18 @@ const TransactionForm = () => {
     // Prepare data for submission
     const transactionData = {
       ...formData,
-      amount: parseFloat(formData.amount)
+      amount: parseFloat(formData.amount),
+      // Make sure boolean fields are explicitly boolean
+      isMoneyReceived: formData.isMoneyReceived === true,
+      isSettled: formData.isSettled === true,
+      applyInterest: formData.applyInterest === true,
+      // Make sure numeric fields are parsed properly
+      interestRate: formData.interestRate ? parseFloat(formData.interestRate) : null,
+      compoundFrequency: formData.compoundFrequency ? parseInt(formData.compoundFrequency) : null
     };
+
+    // Log the data being sent
+    console.log('Submitting transaction data:', transactionData);
 
     try {
       setLoading(true);
@@ -159,7 +169,8 @@ const TransactionForm = () => {
         await updateTransaction(id, transactionData);
         setSuccess('Transaction updated successfully!');
       } else {
-        await createTransaction(transactionData);
+        const response = await createTransaction(transactionData);
+        console.log('Transaction created response:', response);
         setSuccess('Transaction added successfully!');
 
         // Reset form if not editing
@@ -193,6 +204,7 @@ const TransactionForm = () => {
       }, 1500);
     } catch (err) {
       console.error('Error saving transaction:', err);
+      console.error('Error details:', err.response?.data);
       setError(err.response?.data?.error || 'Failed to save transaction. Please try again.');
     } finally {
       setLoading(false);

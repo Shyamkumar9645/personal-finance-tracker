@@ -3,9 +3,40 @@
 
 import api from './authApi';
 
+// src/api/transactionsApi.js - Update the createTransaction function
+
 export const createTransaction = async (transactionData) => {
-  const response = await api.post('/transactions', transactionData);
-  return response.data;
+  try {
+    // Ensure proper data types before sending
+    const processedData = {
+      ...transactionData,
+      // Ensure boolean fields are explicitly boolean
+      isMoneyReceived: Boolean(transactionData.isMoneyReceived),
+      isSettled: Boolean(transactionData.isSettled),
+      applyInterest: Boolean(transactionData.applyInterest),
+      // Ensure numeric fields are numbers
+      amount: parseFloat(transactionData.amount),
+      interestRate: transactionData.interestRate !== undefined && transactionData.interestRate !== ''
+        ? parseFloat(transactionData.interestRate)
+        : null,
+      compoundFrequency: transactionData.compoundFrequency !== undefined && transactionData.compoundFrequency !== ''
+        ? parseInt(transactionData.compoundFrequency)
+        : null,
+    };
+
+    // Log what we're sending to API
+    console.log('Sending transaction data to API:', processedData);
+
+    const response = await api.post('/transactions', processedData);
+
+    // Log the response we receive
+    console.log('API Response:', response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('API Error details:', error.response?.data);
+    throw error;
+  }
 };
 
 export const getTransactions = async (params = {}) => {
