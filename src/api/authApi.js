@@ -4,7 +4,7 @@ import axios from 'axios';
 import { getToken, setToken, removeToken } from '../utils/auth';
 
 // API URL with correct prefix
-const API_URL = process.env.REACT_APP_API_URL || 'https://backend1223.netlify.app/.netlify/functions';
+const API_URL = process.env.REACT_APP_API_URL || 'https://personal-finance-tracker-54et.onrender.com';
 const BASE_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
 console.log('Using API URL:', BASE_URL);
