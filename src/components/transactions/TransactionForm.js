@@ -16,7 +16,12 @@ const TransactionForm = () => {
     category: '',
     paymentMethod: '',
     isSettled: false,
-    reminderDate: ''
+    reminderDate: '',
+    // New interest fields
+    applyInterest: false,
+    interestType: 'none',
+    interestRate: '',
+    compoundFrequency: ''
   });
 
   const [people, setPeople] = useState([]);
@@ -25,6 +30,7 @@ const TransactionForm = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEdit, setIsEdit] = useState(false);
+  const [showInterestSettings, setShowInterestSettings] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
@@ -59,10 +65,20 @@ const TransactionForm = () => {
             transactionDate: new Date(transaction.transactionDate).toISOString().split('T')[0],
             reminderDate: transaction.reminderDate
               ? new Date(transaction.reminderDate).toISOString().split('T')[0]
-              : ''
+              : '',
+            // Interest fields
+            applyInterest: transaction.applyInterest || false,
+            interestType: transaction.interestType || 'none',
+            interestRate: transaction.interestRate || '',
+            compoundFrequency: transaction.compoundFrequency || ''
           };
 
           setFormData(formattedTransaction);
+
+          // Show interest settings section if interest is applied
+          if (formattedTransaction.applyInterest) {
+            setShowInterestSettings(true);
+          }
         }
       } catch (err) {
         console.error('Error fetching initial data:', err);
@@ -81,6 +97,24 @@ const TransactionForm = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // If turning on apply interest, show interest settings
+    if (name === 'applyInterest' && checked) {
+      setShowInterestSettings(true);
+    }
+
+    // If turning off apply interest, hide interest settings
+    if (name === 'applyInterest' && !checked) {
+      setShowInterestSettings(false);
+    }
+
+    // Set interestType to 'none' if interest is turned off
+    if (name === 'applyInterest' && !checked) {
+      setFormData(prev => ({
+        ...prev,
+        interestType: 'none'
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -94,11 +128,39 @@ const TransactionForm = () => {
       return;
     }
 
+    // Validate interest fields if interest is applied
+    if (formData.applyInterest) {
+      if (formData.interestType === 'none') {
+        setError('Please select an interest type');
+        return;
+      }
+
+      if (!formData.interestRate) {
+        setError('Please enter an interest rate');
+        return;
+      }
+
+      if (formData.interestType === 'compound' && !formData.compoundFrequency) {
+        setError('Please enter a compound frequency');
+        return;
+      }
+    }
+
     // Prepare data for submission
     const transactionData = {
       ...formData,
-      amount: parseFloat(formData.amount)
+      amount: parseFloat(formData.amount),
+      // Make sure boolean fields are explicitly boolean
+      isMoneyReceived: formData.isMoneyReceived === true,
+      isSettled: formData.isSettled === true,
+      applyInterest: formData.applyInterest === true,
+      // Make sure numeric fields are parsed properly
+      interestRate: formData.interestRate ? parseFloat(formData.interestRate) : null,
+      compoundFrequency: formData.compoundFrequency ? parseInt(formData.compoundFrequency) : null
     };
+
+    // Log the data being sent
+    console.log('Submitting transaction data:', transactionData);
 
     try {
       setLoading(true);
@@ -107,7 +169,8 @@ const TransactionForm = () => {
         await updateTransaction(id, transactionData);
         setSuccess('Transaction updated successfully!');
       } else {
-        await createTransaction(transactionData);
+        const response = await createTransaction(transactionData);
+        console.log('Transaction created response:', response);
         setSuccess('Transaction added successfully!');
 
         // Reset form if not editing
@@ -119,8 +182,14 @@ const TransactionForm = () => {
             category: '',
             paymentMethod: '',
             isSettled: false,
-            reminderDate: ''
+            reminderDate: '',
+            applyInterest: false,
+            interestType: 'none',
+            interestRate: '',
+            compoundFrequency: ''
           });
+
+          setShowInterestSettings(false);
         }
       }
 
@@ -135,6 +204,7 @@ const TransactionForm = () => {
       }, 1500);
     } catch (err) {
       console.error('Error saving transaction:', err);
+      console.error('Error details:', err.response?.data);
       setError(err.response?.data?.error || 'Failed to save transaction. Please try again.');
     } finally {
       setLoading(false);
@@ -376,6 +446,117 @@ const TransactionForm = () => {
               className="form-input"
               placeholder="Add notes about this transaction"
             ></textarea>
+          </div>
+
+          {/* Interest section */}
+          <div className="border-t border-secondary-200 pt-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="applyInterest"
+                  name="applyInterest"
+                  checked={formData.applyInterest}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
+                />
+                <label htmlFor="applyInterest" className="ml-2 text-sm font-medium text-secondary-700">
+                  Apply Interest to this Transaction
+                </label>
+              </div>
+              {formData.applyInterest && (
+                <button
+                  type="button"
+                  onClick={() => setShowInterestSettings(!showInterestSettings)}
+                  className="text-sm text-primary-600"
+                >
+                  {showInterestSettings ? 'Hide Interest Settings' : 'Show Interest Settings'}
+                </button>
+              )}
+            </div>
+
+            {formData.applyInterest && showInterestSettings && (
+              <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 animate-fade-in">
+                <h3 className="text-md font-medium text-secondary-700 mb-4">Interest Settings</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="interestType" className="form-label">
+                      Interest Type <span className="text-danger-500">*</span>
+                    </label>
+                    <select
+                      id="interestType"
+                      name="interestType"
+                      value={formData.interestType}
+                      onChange={handleChange}
+                      className="form-input"
+                      required={formData.applyInterest}
+                    >
+                      <option value="none">Select interest type</option>
+                      <option value="simple">Simple Interest</option>
+                      <option value="compound">Compound Interest</option>
+                    </select>
+                    {formData.interestType === 'simple' && (
+                      <p className="mt-1 text-xs text-secondary-500">
+                        Simple interest is calculated only on the principal amount.
+                      </p>
+                    )}
+                    {formData.interestType === 'compound' && (
+                      <p className="mt-1 text-xs text-secondary-500">
+                        Compound interest is calculated on the principal amount and the accumulated interest.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="interestRate" className="form-label">
+                      Annual Interest Rate (%) <span className="text-danger-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="interestRate"
+                      name="interestRate"
+                      value={formData.interestRate}
+                      onChange={handleChange}
+                      step="0.01"
+                      min="0"
+                      placeholder="e.g. 10.00"
+                      className="form-input"
+                      required={formData.applyInterest}
+                    />
+                    <p className="mt-1 text-xs text-secondary-500">
+                      Enter the annual interest rate as a percentage (e.g., 10 for 10%)
+                    </p>
+                  </div>
+
+                  {formData.interestType === 'compound' && (
+                    <div>
+                      <label htmlFor="compoundFrequency" className="form-label">
+                        Compound Frequency <span className="text-danger-500">*</span>
+                      </label>
+                      <select
+                        id="compoundFrequency"
+                        name="compoundFrequency"
+                        value={formData.compoundFrequency}
+                        onChange={handleChange}
+                        className="form-input"
+                        required={formData.interestType === 'compound'}
+                      >
+                        <option value="">Select frequency</option>
+                        <option value="1">Annually (1/year)</option>
+                        <option value="2">Semi-Annually (2/year)</option>
+                        <option value="4">Quarterly (4/year)</option>
+                        <option value="12">Monthly (12/year)</option>
+                        <option value="365">Daily (365/year)</option>
+                      </select>
+                      <p className="mt-1 text-xs text-secondary-500">
+                        How often the interest is compounded per year
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4">

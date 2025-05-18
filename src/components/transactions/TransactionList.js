@@ -1,6 +1,4 @@
-// src/components/transactions/TransactionList.js
-// Complete updated file with fixes for transaction summary stats
-
+// src/components/transactions/TransactionList.js with Interest Info
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getTransactions, deleteTransaction, exportTransactions } from '../../api/transactionsApi';
@@ -20,6 +18,7 @@ const TransactionList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
+  const [showInterestColumn, setShowInterestColumn] = useState(false);
 
   // Filter and sort states
   const [filterParams, setFilterParams] = useState({
@@ -31,7 +30,8 @@ const TransactionList = () => {
     endDate: '',
     isMoneyReceived: '',
     category: '',
-    isSettled: ''
+    isSettled: '',
+    applyInterest: '' // New filter for interest-bearing transactions
   });
 
   // Statistics state
@@ -39,7 +39,9 @@ const TransactionList = () => {
     totalShowing: 0,
     totalAmount: 0,
     totalReceived: 0,
-    totalGiven: 0
+    totalGiven: 0,
+    totalSimpleInterest: 0, // New stat for simple interest
+    totalCompoundInterest: 0 // New stat for compound interest
   });
 
   // Load transactions
@@ -49,14 +51,24 @@ const TransactionList = () => {
         setLoading(true);
         setNoResults(false);
 
-        const { transactions: transactionsData } = await getTransactions(filterParams);
+        const { transactions: transactionsData, stats: statsData } = await getTransactions(filterParams);
 
         setTransactions(transactionsData || []);
+
+        // Check if any transaction has interest applied to show interest column
+        if (transactionsData && transactionsData.length > 0) {
+          const hasInterest = transactionsData.some(t => t.applyInterest);
+          setShowInterestColumn(hasInterest);
+        } else {
+          setShowInterestColumn(false);
+        }
 
         // Calculate stats directly from transactions
         if (Array.isArray(transactionsData)) {
           let totalReceived = 0;
           let totalGiven = 0;
+          let totalSimpleInterest = 0;
+          let totalCompoundInterest = 0;
 
           transactionsData.forEach(transaction => {
             const amount = parseFloat(transaction.amount);
@@ -65,13 +77,35 @@ const TransactionList = () => {
             } else {
               totalGiven += amount;
             }
+
+            // Add interest statistics if available
+            if (transaction.applyInterest) {
+              if (transaction.interestType === 'simple') {
+                // Roughly estimate simple interest for the table view
+                const days = Math.floor((new Date() - new Date(transaction.transactionDate)) / (1000 * 60 * 60 * 24));
+                const interestRate = parseFloat(transaction.interestRate || 10) / 100;
+                const interest = amount * interestRate * (days / 365);
+                totalSimpleInterest += transaction.isMoneyReceived ? interest : -interest;
+              } else if (transaction.interestType === 'compound') {
+                // Roughly estimate compound interest for the table view
+                const days = Math.floor((new Date() - new Date(transaction.transactionDate)) / (1000 * 60 * 60 * 24));
+                const interestRate = parseFloat(transaction.interestRate || 12) / 100;
+                const compoundFrequency = parseInt(transaction.compoundFrequency || 12);
+                const years = days / 365;
+                const totalWithInterest = amount * Math.pow(1 + (interestRate / compoundFrequency), compoundFrequency * years);
+                const interest = totalWithInterest - amount;
+                totalCompoundInterest += transaction.isMoneyReceived ? interest : -interest;
+              }
+            }
           });
 
           setStats({
             totalShowing: transactionsData.length,
             totalReceived: totalReceived,
             totalGiven: totalGiven,
-            totalAmount: totalReceived - totalGiven
+            totalAmount: totalReceived - totalGiven,
+            totalSimpleInterest,
+            totalCompoundInterest
           });
 
           setNoResults(transactionsData.length === 0);
@@ -80,7 +114,9 @@ const TransactionList = () => {
             totalShowing: 0,
             totalReceived: 0,
             totalGiven: 0,
-            totalAmount: 0
+            totalAmount: 0,
+            totalSimpleInterest: 0,
+            totalCompoundInterest: 0
           });
           setNoResults(true);
         }
@@ -185,6 +221,7 @@ const TransactionList = () => {
     if (filterParams.isMoneyReceived !== '') count++;
     if (filterParams.category) count++;
     if (filterParams.isSettled !== '') count++;
+    if (filterParams.applyInterest !== '') count++; // Count interest filter
     return count;
   }, [filterParams]);
 
@@ -234,12 +271,13 @@ const TransactionList = () => {
           params={filterParams}
           onChange={handleFilterChange}
           people={people}
+          showInterestFilter={true} // Enable interest filter
         />
       </div>
 
       {/* Transactions Summary */}
       {transactions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="card p-4 bg-secondary-50">
             <div className="text-sm text-secondary-500 mb-1">Showing</div>
             <div className="text-xl font-bold text-secondary-900">{stats.totalShowing} transactions</div>
@@ -256,6 +294,44 @@ const TransactionList = () => {
             <div className="text-sm text-secondary-500 mb-1">Net Balance</div>
             <div className={`text-xl font-bold ${stats.totalAmount >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
               {formatCurrency(stats.totalAmount)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interest Summary - Only show if interest column is visible */}
+      {showInterestColumn && (
+        <div className="card p-4 mb-6 bg-secondary-50">
+          <h3 className="text-md font-medium text-secondary-800 mb-3">Interest Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-secondary-600">Simple Interest:</span>
+                <span className={`font-medium ${stats.totalSimpleInterest >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                  {formatCurrency(stats.totalSimpleInterest)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm text-secondary-500">
+                <span>Total with Simple Interest:</span>
+                <span>
+                  {formatCurrency(stats.totalAmount + stats.totalSimpleInterest)}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-secondary-600">Compound Interest:</span>
+                <span className={`font-medium ${stats.totalCompoundInterest >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                  {formatCurrency(stats.totalCompoundInterest)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm text-secondary-500">
+                <span>Total with Compound Interest:</span>
+                <span>
+                  {formatCurrency(stats.totalAmount + stats.totalCompoundInterest)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -322,6 +398,12 @@ const TransactionList = () => {
                   )}
                 </div>
               </th>
+              {/* Interest Column - only show if there are interest-bearing transactions */}
+              {showInterestColumn && (
+                <th className="table-header-cell text-right">
+                  Interest
+                </th>
+              )}
               <th className="table-header-cell text-right">
                 Actions
               </th>
@@ -330,7 +412,7 @@ const TransactionList = () => {
           <tbody className="table-body">
             {noResults ? (
               <tr>
-                <td colSpan="6" className="px-4 py-8 text-center">
+                <td colSpan={showInterestColumn ? 7 : 6} className="px-4 py-8 text-center">
                   <div className="flex flex-col items-center justify-center py-6">
                     <svg className="w-12 h-12 text-secondary-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
@@ -347,82 +429,131 @@ const TransactionList = () => {
                 </td>
               </tr>
             ) : (
-              transactions.map((transaction) => (
-                <tr key={transaction.id} className="table-row">
-                  <td className="table-cell">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{formatDate(transaction.transactionDate)}</span>
-                      {transaction.reminderDate && (
-                        <span className="text-xs text-secondary-400">
-                          Reminder: {formatDate(transaction.reminderDate)}
+              transactions.map((transaction) => {
+                // Calculate interest for display in the table
+                let interestInfo = null;
+                if (transaction.applyInterest) {
+                  const days = Math.floor((new Date() - new Date(transaction.transactionDate)) / (1000 * 60 * 60 * 24));
+                  const amount = parseFloat(transaction.amount);
+
+                  if (transaction.interestType === 'simple') {
+                    const interestRate = parseFloat(transaction.interestRate || 10) / 100;
+                    const interest = amount * interestRate * (days / 365);
+                    interestInfo = {
+                      type: 'simple',
+                      amount: interest,
+                      days
+                    };
+                  } else if (transaction.interestType === 'compound') {
+                    const interestRate = parseFloat(transaction.interestRate || 12) / 100;
+                    const compoundFrequency = parseInt(transaction.compoundFrequency || 12);
+                    const years = days / 365;
+                    const totalWithInterest = amount * Math.pow(1 + (interestRate / compoundFrequency), compoundFrequency * years);
+                    const interest = totalWithInterest - amount;
+                    interestInfo = {
+                      type: 'compound',
+                      amount: interest,
+                      days
+                    };
+                  }
+                }
+
+                return (
+                  <tr key={transaction.id} className="table-row">
+                    <td className="table-cell">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{formatDate(transaction.transactionDate)}</span>
+                        {transaction.reminderDate && (
+                          <span className="text-xs text-secondary-400">
+                            Reminder: {formatDate(transaction.reminderDate)}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      <Link
+                        to={`/people/${transaction.Person.id}`}
+                        className="text-primary-600 hover:text-primary-800 hover:underline font-medium"
+                      >
+                        {transaction.Person.name}
+                      </Link>
+                      {transaction.isSettled && (
+                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
+                          Settled
                         </span>
                       )}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <Link
-                      to={`/people/${transaction.Person.id}`}
-                      className="text-primary-600 hover:text-primary-800 hover:underline font-medium"
-                    >
-                      {transaction.Person.name}
-                    </Link>
-                    {transaction.isSettled && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
-                        Settled
-                      </span>
-                    )}
-                  </td>
-                  <td className="table-cell">
-                    <div className="max-w-xs truncate">
-                      {transaction.description || '-'}
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    {transaction.category ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
-                        {transaction.category}
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className={`table-cell text-right font-medium ${
-                    transaction.isMoneyReceived ? 'text-success-600' : 'text-danger-600'
-                  }`}>
-                    <div className="flex flex-col items-end">
-                      <span>{transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}</span>
-                      {transaction.paymentMethod && (
-                        <span className="text-xs text-secondary-400">
-                          via {transaction.paymentMethod}
+                    </td>
+                    <td className="table-cell">
+                      <div className="max-w-xs truncate">
+                        {transaction.description || '-'}
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      {transaction.category ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
+                          {transaction.category}
                         </span>
+                      ) : (
+                        '-'
                       )}
-                    </div>
-                  </td>
-                  <td className="table-cell text-right space-x-2 whitespace-nowrap">
-                    <Link
-                      to={`/transactions/edit/${transaction.id}`}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100"
-                    >
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                      </svg>
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setSelectedTransaction(transaction);
-                        setShowDeleteDialog(true);
-                      }}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-danger-700 bg-danger-50 hover:bg-danger-100"
-                    >
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className={`table-cell text-right font-medium ${
+                      transaction.isMoneyReceived ? 'text-success-600' : 'text-danger-600'
+                    }`}>
+                      <div className="flex flex-col items-end">
+                        <span>{transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}</span>
+                        {transaction.paymentMethod && (
+                          <span className="text-xs text-secondary-400">
+                            via {transaction.paymentMethod}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    {/* Interest Column - only show if interest column is visible */}
+                    {showInterestColumn && (
+                      <td className="table-cell text-right">
+                        {interestInfo ? (
+                          <div className="flex flex-col items-end">
+                            <span className={`font-medium ${
+                              transaction.isMoneyReceived ? 'text-success-600' : 'text-danger-600'
+                            }`}>
+                              {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(interestInfo.amount))}
+                            </span>
+                            <span className="text-xs text-secondary-400">
+                              {interestInfo.type === 'simple' ? 'Simple' : 'Compound'} • {interestInfo.days} days
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-secondary-400">-</span>
+                        )}
+                      </td>
+                    )}
+                    <td className="table-cell text-right space-x-2 whitespace-nowrap">
+                      <Link
+                        to={`/transactions/edit/${transaction.id}`}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setSelectedTransaction(transaction);
+                          setShowDeleteDialog(true);
+                        }}
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-danger-700 bg-danger-50 hover:bg-danger-100"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

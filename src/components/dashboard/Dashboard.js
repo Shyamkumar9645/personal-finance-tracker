@@ -1,10 +1,11 @@
-// src/components/dashboard/Dashboard.js
+// src/components/dashboard/Dashboard.js with Interest Summary
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboardStats } from '../../api/transactionsApi';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
+import InterestSummary from './InterestSummary';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 
 const Dashboard = () => {
@@ -141,7 +142,7 @@ const Dashboard = () => {
       {stats && (
         <>
           {/* Navigation Tabs */}
-          <div className="flex space-x-1 mb-6 bg-white rounded-lg p-1 shadow-sm border border-secondary-200 max-w-md">
+          <div className="flex space-x-1 mb-6 bg-white rounded-lg p-1 shadow-sm border border-secondary-200 max-w-md overflow-x-auto">
             <button
               onClick={() => setActiveView('summary')}
               className={`flex-1 py-2 px-4 text-sm font-medium rounded-md ${
@@ -161,6 +162,16 @@ const Dashboard = () => {
               }`}
             >
               Charts
+            </button>
+            <button
+              onClick={() => setActiveView('interest')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md ${
+                activeView === 'interest'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-secondary-700 hover:bg-secondary-50'
+              }`}
+            >
+              Interest
             </button>
             <button
               onClick={() => setActiveView('transactions')}
@@ -418,6 +429,21 @@ const Dashboard = () => {
                     </Link>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Interest View - NEW */}
+          {activeView === 'interest' && (
+            <div className="card mb-8">
+              <div className="card-header">
+                <h2 className="text-lg font-semibold text-secondary-900">Interest Analysis</h2>
+                <p className="text-secondary-500 text-sm mt-1">
+                  Track how much interest you're earning or paying on your transactions
+                </p>
+              </div>
+              <div className="p-4">
+                <InterestSummary />
               </div>
             </div>
           )}
