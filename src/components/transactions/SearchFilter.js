@@ -1,5 +1,6 @@
-// src/components/transactions/SearchFilter.js
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Transition } from '@headlessui/react';
 
 const SearchFilter = ({ params, onChange, people, showInterestFilter = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -15,41 +16,56 @@ const SearchFilter = ({ params, onChange, people, showInterestFilter = false }) 
     onChange('startDate', '');
     onChange('endDate', '');
     onChange('isMoneyReceived', '');
-    onChange('category', '');
     onChange('isSettled', '');
     if (showInterestFilter) {
       onChange('applyInterest', '');
     }
   };
 
+  const hasActiveFilters = params.search || params.personId || params.startDate ||
+                         params.endDate || params.isMoneyReceived !== '' ||
+                         params.isSettled !== '' || params.applyInterest !== '';
+
   return (
-    <div className="p-4">
+    <div className="p-6">
       {/* Basic Search */}
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
+      <div className="flex flex-col lg:flex-row gap-4 mb-4">
         <div className="flex-1">
-          <div className="relative rounded-md shadow-sm">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-secondary-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-            </div>
+          <div className="search-box">
+            <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
             <input
               type="text"
               name="search"
               value={params.search}
               onChange={handleChange}
-              className="form-input pl-10"
-              placeholder="Search transactions..."
+              className="search-input"
+              placeholder="Search by description, amount..."
             />
+            {params.search && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                onClick={() => onChange('search', '')}
+                className="search-clear"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </motion.button>
+            )}
           </div>
         </div>
-        <div className="w-full md:w-64">
+
+        <div className="w-full lg:w-64">
           <select
             id="personId"
             name="personId"
             value={params.personId}
             onChange={handleChange}
-            className="form-input"
+            className="form-select"
           >
             <option value="">All People</option>
             {people.map((person) => (
@@ -59,173 +75,199 @@ const SearchFilter = ({ params, onChange, people, showInterestFilter = false }) 
             ))}
           </select>
         </div>
-        <button
+
+        <motion.button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="btn btn-secondary flex items-center justify-center"
+          className="btn btn-secondary group"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className={`w-4 h-4 mr-2 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
           </svg>
           {isExpanded ? 'Less Filters' : 'More Filters'}
-        </button>
+        </motion.button>
       </div>
 
       {/* Advanced Filters */}
-      {isExpanded && (
-        <div className="bg-secondary-50 rounded-lg p-4 mb-4 border border-secondary-200 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label htmlFor="isMoneyReceived" className="form-label">
-                Transaction Type
-              </label>
-              <select
-                id="isMoneyReceived"
-                name="isMoneyReceived"
-                value={params.isMoneyReceived}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="">All Types</option>
-                <option value="true">Money Received</option>
-                <option value="false">Money Given</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="startDate" className="form-label">
-                From Date
-              </label>
-              <input
-                type="date"
-                id="startDate"
-                name="startDate"
-                value={params.startDate}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="endDate" className="form-label">
-                To Date
-              </label>
-              <input
-                type="date"
-                id="endDate"
-                name="endDate"
-                value={params.endDate}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label htmlFor="category" className="form-label">
-                Category
-              </label>
-              <input
-                type="text"
-                id="category"
-                name="category"
-                value={params.category}
-                onChange={handleChange}
-                placeholder="Filter by category"
-                className="form-input"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="isSettled" className="form-label">
-                Settlement Status
-              </label>
-              <select
-                id="isSettled"
-                name="isSettled"
-                value={params.isSettled}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="">All Statuses</option>
-                <option value="true">Settled</option>
-                <option value="false">Unsettled</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="sortOrder" className="form-label">
-                Sort Order
-              </label>
-              <select
-                id="sortOrder"
-                name="sortOrder"
-                value={params.sortOrder}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="DESC">Newest First</option>
-                <option value="ASC">Oldest First</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Interest Filter - only show if interest filter is enabled */}
-          {showInterestFilter && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label htmlFor="applyInterest" className="form-label">
-                  Interest Bearing
-                </label>
-                <select
-                  id="applyInterest"
-                  name="applyInterest"
-                  value={params.applyInterest}
-                  onChange={handleChange}
-                  className="form-input"
-                >
-                  <option value="">All Transactions</option>
-                  <option value="true">Interest Bearing Only</option>
-                  <option value="false">Non-Interest Bearing Only</option>
-                </select>
-              </div>
-
-              {params.applyInterest === 'true' && (
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-gradient-to-br from-secondary-50 to-white rounded-xl p-6 mb-4 border border-secondary-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label htmlFor="interestType" className="form-label">
-                    Interest Type
+                  <label htmlFor="isMoneyReceived" className="form-label">
+                    Transaction Type
                   </label>
                   <select
-                    id="interestType"
-                    name="interestType"
-                    value={params.interestType || ''}
+                    id="isMoneyReceived"
+                    name="isMoneyReceived"
+                    value={params.isMoneyReceived}
                     onChange={handleChange}
-                    className="form-input"
+                    className="form-select"
                   >
                     <option value="">All Types</option>
-                    <option value="simple">Simple Interest</option>
-                    <option value="compound">Compound Interest</option>
+                    <option value="true">Money Received</option>
+                    <option value="false">Money Given</option>
                   </select>
                 </div>
+
+                <div>
+                  <label htmlFor="startDate" className="form-label">
+                    From Date
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      id="startDate"
+                      name="startDate"
+                      value={params.startDate}
+                      onChange={handleChange}
+                      className="form-input pl-10"
+                    />
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="endDate" className="form-label">
+                    To Date
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      id="endDate"
+                      name="endDate"
+                      value={params.endDate}
+                      onChange={handleChange}
+                      className="form-input pl-10"
+                    />
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="isSettled" className="form-label">
+                    Settlement Status
+                  </label>
+                  <select
+                    id="isSettled"
+                    name="isSettled"
+                    value={params.isSettled}
+                    onChange={handleChange}
+                    className="form-select"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="true">Settled</option>
+                    <option value="false">Unsettled</option>
+                  </select>
+                </div>
+
+                {showInterestFilter && (
+                  <div>
+                    <label htmlFor="applyInterest" className="form-label">
+                      Interest Status
+                    </label>
+                    <select
+                      id="applyInterest"
+                      name="applyInterest"
+                      value={params.applyInterest}
+                      onChange={handleChange}
+                      className="form-select"
+                    >
+                      <option value="">All Transactions</option>
+                      <option value="true">With Interest</option>
+                      <option value="false">Without Interest</option>
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="sortOrder" className="form-label">
+                    Sort Order
+                  </label>
+                  <select
+                    id="sortOrder"
+                    name="sortOrder"
+                    value={params.sortOrder}
+                    onChange={handleChange}
+                    className="form-select"
+                  >
+                    <option value="DESC">Newest First</option>
+                    <option value="ASC">Oldest First</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Interest Type Filter */}
+              {showInterestFilter && params.applyInterest === 'true' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="interestType" className="form-label">
+                        Interest Type
+                      </label>
+                      <select
+                        id="interestType"
+                        name="interestType"
+                        value={params.interestType || ''}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="">All Types</option>
+                        <option value="simple">Simple Interest</option>
+                        <option value="compound">Compound Interest</option>
+                      </select>
+                    </div>
+                  </div>
+                </motion.div>
               )}
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Action Buttons */}
-      <div className="flex justify-end">
-        <button
-          onClick={clearFilters}
-          className="btn btn-secondary"
+      {hasActiveFilters && (
+        <motion.div
+          className="flex justify-end"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
         >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-          Clear Filters
-        </button>
-      </div>
+          <button
+            onClick={clearFilters}
+            className="btn btn-ghost text-danger-600 hover:bg-danger-50"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Clear All Filters
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 };

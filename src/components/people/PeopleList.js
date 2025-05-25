@@ -1,11 +1,38 @@
 // src/components/people/PeopleList.js
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { getPeople, deletePerson } from '../../api/peopleApi';
 import { formatCurrency } from '../../utils/formatters';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import EmptyState from '../ui/EmptyState';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 100 }
+  }
+};
+const PAGE_SIZE = 20;
+
+const highlightMatch = (text, query) => {
+  if (!query) return text;
+  const regex = new RegExp(`(${query})`, 'ig');
+  return text.split(regex).map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-yellow-200">{part}</mark> : part
+  );
+};
 
 const PeopleList = () => {
   const [people, setPeople] = useState([]);
@@ -22,46 +49,54 @@ const PeopleList = () => {
     totalCreditors: 0,
     totalDebtors: 0
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Load people
+  const searchTimeout = useRef();
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const fetchPeople = async () => {
-      try {
-        setLoading(true);
-        const { people: peopleData, stats: statsData } = await getPeople(searchTerm, sortConfig.key, sortConfig.direction);
-        setPeople(peopleData || []);
+    setLoading(true);
+    setError('');
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      fetchPeople();
+    }, 300);
+    return () => clearTimeout(searchTimeout.current);
+    // eslint-disable-next-line
+  }, [searchTerm, sortConfig, currentPage]);
 
-        if (statsData) {
-          setStats(statsData);
-        } else {
-          // Calculate basic stats if not provided by API
-          const totalContacts = peopleData?.length || 0;
-          const totalCreditors = peopleData?.filter(p => parseFloat(p.balance) > 0).length || 0;
-          const totalDebtors = peopleData?.filter(p => parseFloat(p.balance) < 0).length || 0;
-
-          setStats({
-            totalContacts,
-            totalCreditors,
-            totalDebtors
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching people:', err);
-        setError('Failed to load people. Please try again.');
-      } finally {
-        setLoading(false);
+  const fetchPeople = async () => {
+    try {
+      const { people: peopleData, stats: statsData } = await getPeople(
+        searchTerm, sortConfig.key, sortConfig.direction, currentPage, PAGE_SIZE
+      );
+      setPeople(peopleData || []);
+      if (statsData) {
+        setStats(statsData);
+      } else {
+        const totalContacts = peopleData?.length || 0;
+        const totalCreditors = peopleData?.filter(p => parseFloat(p.balance) > 0).length || 0;
+        const totalDebtors = peopleData?.filter(p => parseFloat(p.balance) < 0).length || 0;
+        setStats({ totalContacts, totalCreditors, totalDebtors });
       }
-    };
+    } catch (err) {
+      setError('Failed to load people. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchPeople();
-  }, [searchTerm, sortConfig]);
-
-  // Handle search
   const handleSearch = (e) => {
+    setCurrentPage(1);
     setSearchTerm(e.target.value);
   };
 
-  // Handle sort
+  const clearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   const handleSort = (key) => {
     setSortConfig((prev) => ({
       key,
@@ -69,21 +104,13 @@ const PeopleList = () => {
     }));
   };
 
-  // Handle delete
   const handleDelete = async () => {
     if (!selectedPerson) return;
-
     try {
       setDeleteLoading(true);
       setDeleteError('');
       await deletePerson(selectedPerson.id);
-
-      // Remove from state
-      setPeople(prev =>
-        prev.filter(person => person.id !== selectedPerson.id)
-      );
-
-      // Update stats
+      setPeople(prev => prev.filter(person => person.id !== selectedPerson.id));
       setStats(prev => ({
         ...prev,
         totalContacts: prev.totalContacts - 1,
@@ -94,12 +121,11 @@ const PeopleList = () => {
           ? prev.totalDebtors - 1
           : prev.totalDebtors
       }));
-
       setShowDeleteDialog(false);
       setSelectedPerson(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2500);
     } catch (err) {
-      console.error('Error deleting person:', err);
-
       if (err.response?.data?.error?.includes('transactions')) {
         setDeleteError('Cannot delete a person with associated transactions. Please delete their transactions first.');
       } else {
@@ -110,77 +136,106 @@ const PeopleList = () => {
     }
   };
 
+  const totalPages = Math.ceil(stats.totalContacts / PAGE_SIZE);
+
   if (loading && people.length === 0) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+    <motion.div
+      className="container mx-auto px-4 py-6"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div
+        className="flex flex-col md:flex-row justify-between items-center mb-8"
+        variants={itemVariants}
+      >
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">People</h1>
-          <p className="text-secondary-500 mt-1">Manage your contacts and their balances</p>
+          <h1 className="text-3xl font-bold text-secondary-900 mb-2 gradient-text">
+            People
+          </h1>
+          <p className="text-secondary-500">
+            Manage your contacts and their balances
+          </p>
         </div>
         <Link
           to="/people/new"
-          className="mt-4 md:mt-0 btn btn-primary"
+          className="btn btn-primary flex items-center mt-4 md:mt-0"
+          aria-label="Add Person"
         >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
           </svg>
           Add Person
         </Link>
-      </div>
+      </motion.div>
 
-      {error && <ErrorAlert message={error} />}
+      {showSuccess && (
+        <div className="mb-4 bg-green-100 text-green-800 px-4 py-2 rounded" role="status">
+          Person deleted successfully.
+        </div>
+      )}
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="card p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-sm text-secondary-500 mb-1">Total Contacts</div>
-              <div className="text-xl font-bold text-secondary-900">{stats.totalContacts}</div>
-            </div>
-            <div className="p-2 rounded-lg bg-primary-100 text-primary-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div className="card p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-sm text-secondary-500 mb-1">Creditors</div>
-              <div className="text-xl font-bold text-success-600">{stats.totalCreditors}</div>
-            </div>
-            <div className="p-2 rounded-lg bg-success-100 text-success-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-          </div>
-          <div className="text-sm text-secondary-500 mt-2">People who owe you</div>
-        </div>
-        <div className="card p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-sm text-secondary-500 mb-1">Debtors</div>
-              <div className="text-xl font-bold text-danger-600">{stats.totalDebtors}</div>
-            </div>
-            <div className="p-2 rounded-lg bg-danger-100 text-danger-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-          </div>
-          <div className="text-sm text-secondary-500 mt-2">People you owe</div>
-        </div>
-      </div>
+      {error && (
+        <motion.div variants={itemVariants}>
+          <ErrorAlert message={error} />
+        </motion.div>
+      )}
 
-      {/* Search Bar */}
-      <div className="card mb-6">
+      {/* Stats Cards */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+        variants={itemVariants}
+      >
+        <motion.div
+          className="stat-card group"
+          whileHover={{ y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <div className="stat-card-icon bg-primary-100 text-primary-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+          </div>
+          <div className="text-sm text-secondary-500 mb-1">Contacts</div>
+          <div className="text-2xl font-bold text-secondary-900">{stats.totalContacts}</div>
+        </motion.div>
+        <motion.div
+          className="stat-card bg-gradient-to-br from-success-50 to-white border-success-200 group"
+          whileHover={{ y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <div className="stat-card-icon bg-success-100 text-success-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+          </div>
+          <div className="text-sm text-secondary-500 mb-1">Creditors</div>
+          <div className="text-2xl font-bold text-success-600">{stats.totalCreditors}</div>
+        </motion.div>
+        <motion.div
+          className="stat-card bg-gradient-to-br from-danger-50 to-white border-danger-200 group"
+          whileHover={{ y: -5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <div className="stat-card-icon bg-danger-100 text-danger-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+            </svg>
+          </div>
+          <div className="text-sm text-secondary-500 mb-1">Debtors</div>
+          <div className="text-2xl font-bold text-danger-600">{stats.totalDebtors}</div>
+        </motion.div>
+      </motion.div>
+
+      {/* Search */}
+      <motion.div
+        className="card-gradient mb-6 sticky top-3 z-10"
+        variants={itemVariants}
+      >
         <div className="p-4">
           <div className="relative rounded-md shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -190,28 +245,42 @@ const PeopleList = () => {
             </div>
             <input
               type="text"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search by name..."
               value={searchTerm}
               onChange={handleSearch}
-              className="block w-full pl-10 pr-3 py-2 border border-secondary-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full pl-10 pr-10 py-2 border border-secondary-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              aria-label="Search people"
             />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-2 flex items-center text-secondary-400 hover:text-secondary-600"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* People List */}
-      <div className="table-container">
-        <table className="table">
-          <thead className="table-header">
+      {/* People Table */}
+      <motion.div className="overflow-x-auto rounded-xl shadow bg-white" variants={itemVariants}>
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               <th
-                className="table-header-cell cursor-pointer"
+                className="px-4 py-3 text-left font-semibold text-primary-800 whitespace-nowrap cursor-pointer"
                 onClick={() => handleSort('name')}
+                scope="col"
+                aria-sort={sortConfig.key === 'name' ? (sortConfig.direction === 'ASC' ? 'ascending' : 'descending') : 'none'}
               >
                 <div className="flex items-center space-x-1">
                   <span>Name</span>
                   {sortConfig.key === 'name' && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {sortConfig.direction === 'ASC' ? (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
                       ) : (
@@ -221,17 +290,16 @@ const PeopleList = () => {
                   )}
                 </div>
               </th>
-              <th className="table-header-cell">
-                Contact
-              </th>
               <th
-                className="table-header-cell text-right cursor-pointer"
+                className="px-4 py-3 text-right font-semibold text-primary-800 whitespace-nowrap cursor-pointer"
                 onClick={() => handleSort('balance')}
+                scope="col"
+                aria-sort={sortConfig.key === 'balance' ? (sortConfig.direction === 'ASC' ? 'ascending' : 'descending') : 'none'}
               >
                 <div className="flex items-center justify-end space-x-1">
                   <span>Balance</span>
                   {sortConfig.key === 'balance' && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       {sortConfig.direction === 'ASC' ? (
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
                       ) : (
@@ -241,109 +309,137 @@ const PeopleList = () => {
                   )}
                 </div>
               </th>
-              <th className="table-header-cell text-right">
-                Actions
-              </th>
+              <th className="px-4 py-3 text-right font-semibold text-primary-800 whitespace-nowrap" scope="col">Actions</th>
             </tr>
           </thead>
-          <tbody className="table-body">
+          <tbody className="bg-white divide-y divide-gray-100">
             {people.length === 0 ? (
               <tr>
-                <td colSpan="4" className="px-4 py-8 text-center">
-                  <div className="flex flex-col items-center justify-center py-6">
-                    <svg className="w-12 h-12 text-secondary-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    <p className="text-secondary-500 text-lg mb-2 font-medium">No people found</p>
-                    <p className="text-secondary-400 mb-4">Try adjusting your search or add a new person</p>
-                    <Link to="/people/new" className="btn btn-primary">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                      </svg>
-                      Add Person
-                    </Link>
-                  </div>
+                <td colSpan="3" className="px-4 py-8 text-center">
+                  <EmptyState
+                    title="No people found"
+                    description="Try searching or add a new person to get started."
+                    actionLabel="Add Person"
+                    actionLink="/people/new"
+                  />
                 </td>
               </tr>
             ) : (
-              people.map((person) => (
-                <tr key={person.id} className="table-row">
-                  <td className="table-cell font-medium">
-                    <Link
-                      to={`/people/${person.id}`}
-                      className="text-primary-600 hover:text-primary-800 hover:underline"
-                    >
-                      {person.name}
-                    </Link>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex flex-col">
-                      {person.email && (
-                        <a href={`mailto:${person.email}`} className="text-secondary-600 hover:text-primary-600 hover:underline flex items-center mb-1">
-                          <svg className="w-4 h-4 mr-1 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              <AnimatePresence>
+                {people.map((person, idx) => (
+                  <motion.tr
+                    key={person.id}
+                    className="group hover:bg-primary-50 transition cursor-pointer"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={e => {
+                      if (
+                        e.target.closest('button') ||
+                        e.target.closest('a')
+                      ) return;
+                      navigate(`/people/edit/${person.id}`);
+                    }}
+                  >
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">
+                      <span className="flex items-center space-x-3">
+                        <span className="avatar-md bg-gradient-to-br from-primary-100 to-primary-200 text-primary-700 font-semibold">
+                          {person.name[0].toUpperCase()}
+                        </span>
+                        <span>
+                          {highlightMatch(person.name, searchTerm)}
+                        </span>
+                      </span>
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
+                      parseFloat(person.balance) > 0
+                        ? 'text-success-600'
+                        : parseFloat(person.balance) < 0
+                          ? 'text-danger-600'
+                          : 'text-secondary-500'
+                    }`}>
+                      {formatCurrency(parseFloat(person.balance))}
+                      {parseFloat(person.balance) > 0 && (
+                        <div className="text-xs text-secondary-500 mt-1">They owe you</div>
+                      )}
+                      {parseFloat(person.balance) < 0 && (
+                        <div className="text-xs text-secondary-500 mt-1">You owe them</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              navigate(`/people/edit/${person.id}`);
+                            }}
+                            className="icon-button-primary"
+                            aria-label={`Edit ${person.name}`}
+                          >
+                            <svg className="w-5 h-5 text-primary-600 hover:text-primary-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                          </button>
+                        </motion.div>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedPerson(person);
+                            setShowDeleteDialog(true);
+                            setDeleteError('');
+                          }}
+                          className="icon-button"
+                          aria-label={`Delete ${person.name}`}
+                        >
+                          <svg className="w-5 h-5 text-danger-600 hover:text-danger-800 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                           </svg>
-                          {person.email}
-                        </a>
-                      )}
-                      {person.phone && (
-                        <a href={`tel:${person.phone}`} className="text-secondary-600 hover:text-primary-600 hover:underline flex items-center">
-                          <svg className="w-4 h-4 mr-1 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                          </svg>
-                          {person.phone}
-                        </a>
-                      )}
-                      {!person.email && !person.phone && (
-                        <span className="text-secondary-400 italic">No contact info</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className={`table-cell text-right font-medium ${
-                    parseFloat(person.balance) > 0
-                      ? 'text-success-600'
-                      : parseFloat(person.balance) < 0
-                        ? 'text-danger-600'
-                        : 'text-secondary-500'
-                  }`}>
-                    {formatCurrency(parseFloat(person.balance))}
-                    {parseFloat(person.balance) > 0 && (
-                      <div className="text-xs text-secondary-500 mt-1">They owe you</div>
-                    )}
-                    {parseFloat(person.balance) < 0 && (
-                      <div className="text-xs text-secondary-500 mt-1">You owe them</div>
-                    )}
-                  </td>
-                  <td className="table-cell text-right space-x-2 whitespace-nowrap">
-                    <Link
-                      to={`/people/edit/${person.id}`}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100"
-                    >
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                      </svg>
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setSelectedPerson(person);
-                        setShowDeleteDialog(true);
-                        setDeleteError('');
-                      }}
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-danger-700 bg-danger-50 hover:bg-danger-100"
-                    >
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                        </motion.button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             )}
           </tbody>
         </table>
-      </div>
+      </motion.div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav className="flex justify-center mt-6" aria-label="Pagination">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            className="px-3 py-1 mx-1 rounded bg-secondary-100 hover:bg-secondary-200"
+            disabled={currentPage === 1}
+            aria-label="Previous Page"
+          >
+            &larr;
+          </button>
+          {[...Array(totalPages)].map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentPage(idx + 1)}
+              className={`px-3 py-1 mx-1 rounded ${currentPage === idx + 1 ? 'bg-primary-200 font-bold' : 'bg-secondary-100 hover:bg-secondary-200'}`}
+              aria-current={currentPage === idx + 1 ? 'page' : undefined}
+            >
+              {idx + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            className="px-3 py-1 mx-1 rounded bg-secondary-100 hover:bg-secondary-200"
+            disabled={currentPage === totalPages}
+            aria-label="Next Page"
+          >
+            &rarr;
+          </button>
+        </nav>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -358,7 +454,7 @@ const PeopleList = () => {
                 {parseFloat(selectedPerson.balance) !== 0 && (
                   <div className="mt-2 p-3 bg-secondary-50 rounded-lg">
                     <div className="flex items-center">
-                      <svg className="w-5 h-5 text-warning-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-5 h-5 text-warning-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                       </svg>
                       <span className="text-warning-800 font-medium">Warning</span>
@@ -385,7 +481,7 @@ const PeopleList = () => {
         isLoading={deleteLoading}
         hasError={!!deleteError}
       />
-    </div>
+    </motion.div>
   );
 };
 

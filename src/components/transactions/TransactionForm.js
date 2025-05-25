@@ -6,18 +6,18 @@ import { getPeople } from '../../api/peopleApi';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
 
+// Enhanced, modern, and responsive TransactionForm UI
 const TransactionForm = () => {
   const [formData, setFormData] = useState({
     personId: '',
     amount: '',
     isMoneyReceived: false,
-    transactionDate: new Date().toISOString().split('T')[0], // Default to today
+    transactionDate: new Date().toISOString().split('T')[0],
     description: '',
     category: '',
     paymentMethod: '',
     isSettled: false,
     reminderDate: '',
-    // New interest fields
     applyInterest: false,
     interestType: 'none',
     interestRate: '',
@@ -49,45 +49,31 @@ const TransactionForm = () => {
     const fetchInitialData = async () => {
       try {
         setInitialLoading(true);
-
-        // Fetch people
         const { people: peopleData } = await getPeople();
         setPeople(peopleData || []);
-
-        // If editing, fetch transaction
         if (id) {
           setIsEdit(true);
           const { transaction } = await getTransaction(id);
-
-          // Format dates for form inputs
           const formattedTransaction = {
             ...transaction,
             transactionDate: new Date(transaction.transactionDate).toISOString().split('T')[0],
             reminderDate: transaction.reminderDate
               ? new Date(transaction.reminderDate).toISOString().split('T')[0]
               : '',
-            // Interest fields
             applyInterest: transaction.applyInterest || false,
             interestType: transaction.interestType || 'none',
             interestRate: transaction.interestRate || '',
             compoundFrequency: transaction.compoundFrequency || ''
           };
-
           setFormData(formattedTransaction);
-
-          // Show interest settings section if interest is applied
-          if (formattedTransaction.applyInterest) {
-            setShowInterestSettings(true);
-          }
+          if (formattedTransaction.applyInterest) setShowInterestSettings(true);
         }
       } catch (err) {
-        console.error('Error fetching initial data:', err);
         setError('Failed to load data. Please try again.');
       } finally {
         setInitialLoading(false);
       }
     };
-
     fetchInitialData();
   }, [id]);
 
@@ -97,23 +83,9 @@ const TransactionForm = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-
-    // If turning on apply interest, show interest settings
-    if (name === 'applyInterest' && checked) {
-      setShowInterestSettings(true);
-    }
-
-    // If turning off apply interest, hide interest settings
-    if (name === 'applyInterest' && !checked) {
-      setShowInterestSettings(false);
-    }
-
-    // Set interestType to 'none' if interest is turned off
-    if (name === 'applyInterest' && !checked) {
-      setFormData(prev => ({
-        ...prev,
-        interestType: 'none'
-      }));
+    if (name === 'applyInterest') {
+      setShowInterestSettings(checked);
+      if (!checked) setFormData(prev => ({ ...prev, interestType: 'none' }));
     }
   };
 
@@ -121,90 +93,65 @@ const TransactionForm = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    // Validate form
+    // Basic validation
     if (!formData.personId || !formData.amount || !formData.transactionDate) {
       setError('Please fill out all required fields');
       return;
     }
-
-    // Validate interest fields if interest is applied
     if (formData.applyInterest) {
       if (formData.interestType === 'none') {
         setError('Please select an interest type');
         return;
       }
-
       if (!formData.interestRate) {
         setError('Please enter an interest rate');
         return;
       }
-
       if (formData.interestType === 'compound' && !formData.compoundFrequency) {
         setError('Please enter a compound frequency');
         return;
       }
     }
-
-    // Prepare data for submission
     const transactionData = {
       ...formData,
       amount: parseFloat(formData.amount),
-      // Make sure boolean fields are explicitly boolean
       isMoneyReceived: formData.isMoneyReceived === true,
       isSettled: formData.isSettled === true,
       applyInterest: formData.applyInterest === true,
-      // Make sure numeric fields are parsed properly
       interestRate: formData.interestRate ? parseFloat(formData.interestRate) : null,
       compoundFrequency: formData.compoundFrequency ? parseInt(formData.compoundFrequency) : null
     };
-
-    // Log the data being sent
-    console.log('Submitting transaction data:', transactionData);
-
     try {
       setLoading(true);
-
       if (isEdit) {
         await updateTransaction(id, transactionData);
         setSuccess('Transaction updated successfully!');
       } else {
-        const response = await createTransaction(transactionData);
-        console.log('Transaction created response:', response);
+        await createTransaction(transactionData);
         setSuccess('Transaction added successfully!');
-
-        // Reset form if not editing
-        if (!isEdit) {
-          setFormData({
-            ...formData,
-            amount: '',
-            description: '',
-            category: '',
-            paymentMethod: '',
-            isSettled: false,
-            reminderDate: '',
-            applyInterest: false,
-            interestType: 'none',
-            interestRate: '',
-            compoundFrequency: ''
-          });
-
-          setShowInterestSettings(false);
-        }
+        setFormData({
+          ...formData,
+          amount: '',
+          description: '',
+          category: '',
+          paymentMethod: '',
+          isSettled: false,
+          reminderDate: '',
+          applyInterest: false,
+          interestType: 'none',
+          interestRate: '',
+          compoundFrequency: ''
+        });
+        setShowInterestSettings(false);
       }
-
-      // Redirect after a short delay to show success message
       setTimeout(() => {
         if (isEdit || !formData.personId) {
           navigate('/transactions');
         } else {
-          // If adding from person details, go back to that person
           navigate(`/people/${formData.personId}`);
         }
       }, 1500);
     } catch (err) {
-      console.error('Error saving transaction:', err);
-      console.error('Error details:', err.response?.data);
       setError(err.response?.data?.error || 'Failed to save transaction. Please try again.');
     } finally {
       setLoading(false);
@@ -215,28 +162,29 @@ const TransactionForm = () => {
     return <LoadingSpinner />;
   }
 
-  // Get current person name
   const currentPersonName = formData.personId
     ? people.find(p => p.id === formData.personId)?.name || 'Selected Person'
     : '';
 
   return (
-    <div className="container mx-auto px-4 py-6 animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in">
+      {/* Back Button */}
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center text-primary-600 hover:text-primary-800"
+          className="inline-flex items-center text-primary-600 hover:text-primary-800 transition"
         >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
           Back
         </button>
       </div>
 
-      <div className="card max-w-3xl mx-auto">
-        <div className="card-header">
-          <h1 className="text-xl font-bold text-secondary-900">
+      {/* Card */}
+      <div className="bg-white shadow-xl rounded-2xl max-w-3xl mx-auto overflow-hidden">
+        <div className="px-8 pt-8 pb-4 border-b border-secondary-100">
+          <h1 className="text-2xl font-bold text-secondary-900">
             {isEdit ? 'Edit Transaction' : 'Add New Transaction'}
           </h1>
           {formData.personId && (
@@ -246,13 +194,12 @@ const TransactionForm = () => {
           )}
         </div>
 
-        {error && <ErrorAlert message={error} className="mx-6 mt-6" />}
-
+        {error && <ErrorAlert message={error} className="mx-8 mt-6" />}
         {success && (
-          <div className="mx-6 mt-6 bg-success-50 border-l-4 border-success-500 p-4 rounded-md">
+          <div className="mx-8 mt-6 bg-success-50 border-l-4 border-success-500 p-4 rounded-md" role="status" aria-live="polite">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-success-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-success-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -263,10 +210,11 @@ const TransactionForm = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <form onSubmit={handleSubmit} className="px-8 py-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Person */}
             <div>
-              <label htmlFor="personId" className="form-label">
+              <label htmlFor="personId" className="block mb-2 text-sm font-medium text-secondary-700">
                 Person <span className="text-danger-500">*</span>
               </label>
               <select
@@ -275,7 +223,7 @@ const TransactionForm = () => {
                 value={formData.personId}
                 onChange={handleChange}
                 required
-                className="form-input"
+                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                 disabled={!!location.search.includes('personId=')}
               >
                 <option value="">Select a person</option>
@@ -292,8 +240,9 @@ const TransactionForm = () => {
               )}
             </div>
 
+            {/* Transaction Date */}
             <div>
-              <label htmlFor="transactionDate" className="form-label">
+              <label htmlFor="transactionDate" className="block mb-2 text-sm font-medium text-secondary-700">
                 Transaction Date <span className="text-danger-500">*</span>
               </label>
               <input
@@ -303,12 +252,13 @@ const TransactionForm = () => {
                 value={formData.transactionDate}
                 onChange={handleChange}
                 required
-                className="form-input"
+                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
               />
             </div>
 
+            {/* Amount */}
             <div>
-              <label htmlFor="amount" className="form-label">
+              <label htmlFor="amount" className="block mb-2 text-sm font-medium text-secondary-700">
                 Amount <span className="text-danger-500">*</span>
               </label>
               <div className="relative">
@@ -324,14 +274,15 @@ const TransactionForm = () => {
                   required
                   min="0.01"
                   step="0.01"
-                  className="form-input pl-8"
+                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-2.5"
                   placeholder="0.00"
                 />
               </div>
             </div>
 
+            {/* Transaction Type */}
             <div>
-              <label className="form-label mb-3">
+              <label className="block mb-2 text-sm font-medium text-secondary-700">
                 Transaction Type <span className="text-danger-500">*</span>
               </label>
               <div className="flex space-x-4">
@@ -341,11 +292,10 @@ const TransactionForm = () => {
                     name="isMoneyReceived"
                     checked={formData.isMoneyReceived === true}
                     onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: true }))}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded-full"
+                    className="h-4 w-4 text-success-600 focus:ring-success-500 border-secondary-300"
                   />
-                  <span className="ml-2 text-sm text-secondary-700">
-                    <span className="font-medium text-success-600">Money Received</span>
-                    <span className="ml-1 text-xs text-secondary-500">(they paid you)</span>
+                  <span className="ml-2 text-sm text-success-700 font-medium">
+                    Money Received
                   </span>
                 </label>
                 <label className="flex items-center">
@@ -354,18 +304,21 @@ const TransactionForm = () => {
                     name="isMoneyReceived"
                     checked={formData.isMoneyReceived === false}
                     onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: false }))}
-                    className="h-4 w-4 text-danger-600 focus:ring-danger-500 border-secondary-300 rounded-full"
+                    className="h-4 w-4 text-danger-600 focus:ring-danger-500 border-secondary-300"
                   />
-                  <span className="ml-2 text-sm text-secondary-700">
-                    <span className="font-medium text-danger-600">Money Given</span>
-                    <span className="ml-1 text-xs text-secondary-500">(you paid them)</span>
+                  <span className="ml-2 text-sm text-danger-700 font-medium">
+                    Money Given
                   </span>
                 </label>
               </div>
+              <p className="text-xs text-secondary-500 mt-1">
+                Select whether you received or gave money
+              </p>
             </div>
 
+            {/* Category */}
             <div>
-              <label htmlFor="category" className="form-label">
+              <label htmlFor="category" className="block mb-2 text-sm font-medium text-secondary-700">
                 Category
               </label>
               <input
@@ -374,13 +327,14 @@ const TransactionForm = () => {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="form-input"
+                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                 placeholder="e.g. Lunch, Rent, Travel"
               />
             </div>
 
+            {/* Payment Method */}
             <div>
-              <label htmlFor="paymentMethod" className="form-label">
+              <label htmlFor="paymentMethod" className="block mb-2 text-sm font-medium text-secondary-700">
                 Payment Method
               </label>
               <select
@@ -388,7 +342,7 @@ const TransactionForm = () => {
                 name="paymentMethod"
                 value={formData.paymentMethod}
                 onChange={handleChange}
-                className="form-input"
+                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
               >
                 <option value="">Select a payment method</option>
                 <option value="Cash">Cash</option>
@@ -401,7 +355,8 @@ const TransactionForm = () => {
               </select>
             </div>
 
-            <div className="flex items-center">
+            {/* Settled */}
+            <div className="flex items-center mt-2">
               <input
                 type="checkbox"
                 id="isSettled"
@@ -415,10 +370,10 @@ const TransactionForm = () => {
               </label>
             </div>
 
+            {/* Reminder Date */}
             <div>
-              <label htmlFor="reminderDate" className="form-label flex items-center">
-                <span>Reminder Date</span>
-                <span className="ml-2 text-xs text-secondary-500">(Optional)</span>
+              <label htmlFor="reminderDate" className="block mb-2 text-sm font-medium text-secondary-700">
+                Reminder Date <span className="ml-2 text-xs text-secondary-500">(Optional)</span>
               </label>
               <input
                 type="date"
@@ -426,15 +381,16 @@ const TransactionForm = () => {
                 name="reminderDate"
                 value={formData.reminderDate}
                 onChange={handleChange}
-                className="form-input"
+                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                 min={new Date().toISOString().split('T')[0]}
               />
               <p className="mt-1 text-xs text-secondary-500">Set a date to remind yourself about this transaction</p>
             </div>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="description" className="form-label">
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block mb-2 text-sm font-medium text-secondary-700">
               Description
             </label>
             <textarea
@@ -443,13 +399,13 @@ const TransactionForm = () => {
               value={formData.description}
               onChange={handleChange}
               rows="3"
-              className="form-input"
+              className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
               placeholder="Add notes about this transaction"
             ></textarea>
           </div>
 
-          {/* Interest section */}
-          <div className="border-t border-secondary-200 pt-4 mb-6">
+          {/* Interest Section */}
+          <div className="border-t border-secondary-200 pt-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <input
@@ -468,7 +424,7 @@ const TransactionForm = () => {
                 <button
                   type="button"
                   onClick={() => setShowInterestSettings(!showInterestSettings)}
-                  className="text-sm text-primary-600"
+                  className="text-sm text-primary-600 hover:underline"
                 >
                   {showInterestSettings ? 'Hide Interest Settings' : 'Show Interest Settings'}
                 </button>
@@ -476,12 +432,11 @@ const TransactionForm = () => {
             </div>
 
             {formData.applyInterest && showInterestSettings && (
-              <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 animate-fade-in">
-                <h3 className="text-md font-medium text-secondary-700 mb-4">Interest Settings</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-secondary-50 p-6 rounded-lg border border-secondary-200 animate-fade-in">
+                <h3 className="text-md font-semibold text-secondary-700 mb-4">Interest Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="interestType" className="form-label">
+                    <label htmlFor="interestType" className="block mb-2 text-sm font-medium text-secondary-700">
                       Interest Type <span className="text-danger-500">*</span>
                     </label>
                     <select
@@ -489,7 +444,7 @@ const TransactionForm = () => {
                       name="interestType"
                       value={formData.interestType}
                       onChange={handleChange}
-                      className="form-input"
+                      className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                       required={formData.applyInterest}
                     >
                       <option value="none">Select interest type</option>
@@ -507,9 +462,8 @@ const TransactionForm = () => {
                       </p>
                     )}
                   </div>
-
                   <div>
-                    <label htmlFor="interestRate" className="form-label">
+                    <label htmlFor="interestRate" className="block mb-2 text-sm font-medium text-secondary-700">
                       Annual Interest Rate (%) <span className="text-danger-500">*</span>
                     </label>
                     <input
@@ -521,17 +475,16 @@ const TransactionForm = () => {
                       step="0.01"
                       min="0"
                       placeholder="e.g. 10.00"
-                      className="form-input"
+                      className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                       required={formData.applyInterest}
                     />
                     <p className="mt-1 text-xs text-secondary-500">
                       Enter the annual interest rate as a percentage (e.g., 10 for 10%)
                     </p>
                   </div>
-
                   {formData.interestType === 'compound' && (
                     <div>
-                      <label htmlFor="compoundFrequency" className="form-label">
+                      <label htmlFor="compoundFrequency" className="block mb-2 text-sm font-medium text-secondary-700">
                         Compound Frequency <span className="text-danger-500">*</span>
                       </label>
                       <select
@@ -539,7 +492,7 @@ const TransactionForm = () => {
                         name="compoundFrequency"
                         value={formData.compoundFrequency}
                         onChange={handleChange}
-                        className="form-input"
+                        className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
                         required={formData.interestType === 'compound'}
                       >
                         <option value="">Select frequency</option>
@@ -559,11 +512,12 @@ const TransactionForm = () => {
             )}
           </div>
 
-          <div className="flex justify-end space-x-4">
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4 pt-6">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="btn btn-secondary"
+              className="btn btn-secondary px-6 py-2 rounded-lg"
               disabled={loading}
             >
               Cancel
@@ -571,11 +525,11 @@ const TransactionForm = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary flex items-center"
+              className="btn btn-primary px-6 py-2 rounded-lg flex items-center"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -583,7 +537,7 @@ const TransactionForm = () => {
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                   {isEdit ? 'Update Transaction' : 'Save Transaction'}
