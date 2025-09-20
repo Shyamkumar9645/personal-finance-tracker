@@ -6,6 +6,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import EmptyState from '../ui/EmptyState';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PAGE_SIZE = 20;
 
@@ -212,10 +213,15 @@ const PeopleList = () => {
                       <th className="px-8 py-4 text-right font-bold text-primary-700 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <AnimatePresence>
                     {people.map((person, idx) => (
-                      <tr
+                      <motion.tr
                         key={person.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
                         className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'} cursor-pointer`}
                         onClick={e => {
                           if (
@@ -277,9 +283,9 @@ const PeopleList = () => {
                             </button>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
-                  </tbody>
+                  </AnimatePresence>
                 </table>
               </div>
             )}

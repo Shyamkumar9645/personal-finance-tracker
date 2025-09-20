@@ -7,6 +7,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import PersonChart from './PersonChart';
+import SkeletonRow from '../ui/SkeletonRow';
 
 const PersonDetails = () => {
   const [person, setPerson] = useState(null);
@@ -88,7 +89,6 @@ const PersonDetails = () => {
     }
   };
 
-  if (loading && !person) return <LoadingSpinner />;
   if (error) return <ErrorAlert message={error} />;
   if (!person) return <ErrorAlert message="Person not found" />;
 
@@ -289,65 +289,82 @@ const PersonDetails = () => {
                 <table className="w-full">
                   <thead className="bg-primary-50">
                     <tr>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>Date</th>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>
+                        <div className="flex items-center">
+                          Date
+                          {sortConfig.key === 'transactionDate' && (
+                            <span className="ml-2">
+                              {sortConfig.direction === 'ascending' ? '🔼' : '🔽'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                       <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Description</th>
                       <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Amount</th>
                       <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedTransactions.map((transaction, index) => (
-                      <tr
-                        key={transaction.id}
-                        className={`hover:bg-primary-50 transition-all ${index % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
-                        onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td className="px-8 py-6 text-sm font-medium text-secondary-900">
-                          {formatDate(transaction.transactionDate)}
-                        </td>
-                        <td className="px-8 py-6">
-                          <span className="font-medium text-secondary-900">{transaction.description || '-'}</span>
-                          {transaction.isSettled && (
-                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-700">
-                              ✓ Settled
+                    {loading ? (
+                      <>
+                        <SkeletonRow />
+                        <SkeletonRow />
+                        <SkeletonRow />
+                      </>
+                    ) : (
+                      sortedTransactions.map((transaction, index) => (
+                        <tr
+                          key={transaction.id}
+                          className={`hover:bg-primary-50 transition-all ${index % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
+                          onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td className="px-8 py-6 text-sm font-medium text-secondary-900">
+                            {formatDate(transaction.transactionDate)}
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className="font-medium text-secondary-900">{transaction.description || '-'}</span>
+                            {transaction.isSettled && (
+                              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-700">
+                                ✓ Settled
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
+                              {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
                             </span>
-                          )}
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
-                            {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Link
-                              to={`/transactions/edit/${transaction.id}`}
-                              onClick={e => e.stopPropagation()}
-                              className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
-                              title="Edit"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                              </svg>
-                            </Link>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                setSelectedTransaction(transaction);
-                                setShowDeleteDialog(true);
-                              }}
-                              className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Link
+                                to={`/transactions/edit/${transaction.id}`}
+                                onClick={e => e.stopPropagation()}
+                                className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
+                                title="Edit"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                              </Link>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setSelectedTransaction(transaction);
+                                  setShowDeleteDialog(true);
+                                }}
+                                className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
+                                title="Delete"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

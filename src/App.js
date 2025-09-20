@@ -1,9 +1,9 @@
-// src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // Auth components
 import Login from './components/auth/Login';
@@ -22,11 +22,34 @@ import PersonDetails from './components/people/PersonDetails';
 import Profile from './components/profile/Profile';
 import Settings from './components/settings/Settings';
 
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  in: {
+    opacity: 1,
+    y: 0,
+  },
+  out: {
+    opacity: 0,
+    y: -20,
+  },
+};
+
+const pageTransition = {
+  type: 'tween',
+  ease: 'anticipate',
+  duration: 0.5,
+};
+
 function App() {
+  const location = useLocation();
+
   return (
-    <Router>
-      <AuthProvider>
-        <Routes>
+    <AuthProvider>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -48,7 +71,15 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <Dashboard />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -58,7 +89,15 @@ function App() {
               path="/transactions"
               element={
                 <ProtectedRoute>
-                  <TransactionList />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <TransactionList />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -66,7 +105,15 @@ function App() {
               path="/transactions/new"
               element={
                 <ProtectedRoute>
-                  <TransactionForm />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <TransactionForm />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -74,7 +121,15 @@ function App() {
               path="/transactions/edit/:id"
               element={
                 <ProtectedRoute>
-                  <TransactionForm />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <TransactionForm />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -84,7 +139,15 @@ function App() {
               path="/people"
               element={
                 <ProtectedRoute>
-                  <PeopleList />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <PeopleList />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -92,7 +155,15 @@ function App() {
               path="/people/new"
               element={
                 <ProtectedRoute>
-                  <PersonForm />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <PersonForm />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -100,7 +171,15 @@ function App() {
               path="/people/edit/:id"
               element={
                 <ProtectedRoute>
-                  <PersonForm />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <PersonForm />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -108,7 +187,15 @@ function App() {
               path="/people/:id"
               element={
                 <ProtectedRoute>
-                  <PersonDetails />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <PersonDetails />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -118,7 +205,15 @@ function App() {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <Profile />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -126,7 +221,15 @@ function App() {
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <Settings />
+                  <motion.div
+                    initial="initial"
+                    animate="in"
+                    exit="out"
+                    variants={pageVariants}
+                    transition={pageTransition}
+                  >
+                    <Settings />
+                  </motion.div>
                 </ProtectedRoute>
               }
             />
@@ -135,9 +238,15 @@ function App() {
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </AnimatePresence>
+    </AuthProvider>
   );
 }
 
-export default App;
+const AppWrapper = () => (
+  <Router>
+    <App />
+  </Router>
+);
+
+export default AppWrapper;

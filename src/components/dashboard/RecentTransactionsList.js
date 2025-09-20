@@ -40,7 +40,14 @@ const RecentTransactionsList = ({ transactions }) => {
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>
-              Date
+              <div className="flex items-center">
+                Date
+                {sortConfig.key === 'transactionDate' && (
+                  <span className="ml-2">
+                    {sortConfig.direction === 'ascending' ? '🔼' : '🔽'}
+                  </span>
+                )}
+              </div>
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Person

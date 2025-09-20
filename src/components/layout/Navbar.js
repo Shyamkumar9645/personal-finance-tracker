@@ -44,7 +44,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50 border-b border-gray-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex items-center justify-between h-16">
           {/* Mobile menu button */}
@@ -55,7 +55,7 @@ const Navbar = () => {
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
-              className="inline-flex items-center justify-center p-2 rounded-md text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
             >
               <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
@@ -87,7 +87,7 @@ const Navbar = () => {
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/dashboard')
                       ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
                   }`}
                 >
                   Dashboard
@@ -97,7 +97,7 @@ const Navbar = () => {
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/transactions')
                       ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
                   }`}
                 >
                   Transactions
@@ -107,7 +107,7 @@ const Navbar = () => {
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/people')
                       ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
                   }`}
                 >
                   People
@@ -141,19 +141,19 @@ const Navbar = () => {
                   className="origin-top-right absolute right-0 mt-2 w-48 rounded-xl shadow-dropdown py-1 bg-white ring-1 ring-black ring-opacity-5 z-10"
                   onClick={handleMenuClick}
                 >
-                  <div className="px-4 py-3 border-b border-secondary-100">
-                    <div className="font-semibold text-secondary-900">{currentUser.firstName} {currentUser.lastName}</div>
-                    <div className="text-sm text-secondary-500 truncate">{currentUser.email}</div>
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="font-semibold text-gray-900">{currentUser.firstName} {currentUser.lastName}</div>
+                    <div className="text-sm text-gray-500 truncate">{currentUser.email}</div>
                   </div>
                   <Link
                     to="/profile"
-                    className="block px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Your Profile
                   </Link>
                   <Link
                     to="/settings"
-                    className="block px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Settings
                   </Link>
@@ -179,7 +179,7 @@ const Navbar = () => {
               className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/dashboard')
                   ? 'bg-primary-50 text-primary-700'
-                  : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
               }`}
             >
               Dashboard
@@ -189,7 +189,7 @@ const Navbar = () => {
               className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/transactions')
                   ? 'bg-primary-50 text-primary-700'
-                  : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
               }`}
             >
               Transactions
@@ -199,7 +199,7 @@ const Navbar = () => {
               className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/people')
                   ? 'bg-primary-50 text-primary-700'
-                  : 'text-secondary-700 hover:bg-secondary-100 hover:text-primary-600'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600'
               }`}
             >
               People

@@ -7,6 +7,9 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorAlert from '../ui/ErrorAlert';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import EmptyState from '../ui/EmptyState';
+import SkeletonRow from '../ui/SkeletonRow';
+import SearchFilter from './SearchFilter';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState([]);
@@ -17,6 +20,14 @@ const TransactionList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'transactionDate', direction: 'descending' });
+  const [searchParams, setSearchParams] = useState({
+    search: '',
+    personId: '',
+    startDate: '',
+    endDate: '',
+    isMoneyReceived: '',
+    isSettled: '',
+  });
 
   const navigate = useNavigate();
 
@@ -24,7 +35,7 @@ const TransactionList = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const { transactions: txs } = await getTransactions();
+        const { transactions: txs } = await getTransactions(searchParams);
         setTransactions(txs || []);
         const { people: peopleData } = await getPeople();
         setPeople(peopleData || []);
@@ -35,7 +46,7 @@ const TransactionList = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [searchParams]);
 
   const sortedTransactions = React.useMemo(() => {
     let sortableItems = [...transactions];
@@ -61,6 +72,10 @@ const TransactionList = () => {
     setSortConfig({ key, direction });
   };
 
+  const handleFilterChange = (name, value) => {
+    setSearchParams(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleDelete = async () => {
     if (!selectedTransaction) return;
     try {
@@ -84,7 +99,6 @@ const TransactionList = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner fullScreen />;
   if (error) return <ErrorAlert message={error} />;
 
   return (
@@ -121,6 +135,7 @@ const TransactionList = () => {
               </button>
             </div>
           </div>
+          <SearchFilter params={searchParams} onChange={handleFilterChange} people={people} />
           <div className="p-8">
             {transactions.length === 0 ? (
               <div className="p-16 text-center">
@@ -144,7 +159,16 @@ const TransactionList = () => {
                 <table className="w-full">
                   <thead className="bg-primary-50">
                     <tr>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>Date</th>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>
+                        <div className="flex items-center">
+                          Date
+                          {sortConfig.key === 'transactionDate' && (
+                            <span className="ml-2">
+                              {sortConfig.direction === 'ascending' ? '🔼' : '🔽'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                       <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Person</th>
                       <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Description</th>
                       <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Amount</th>
@@ -152,62 +176,79 @@ const TransactionList = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedTransactions.map((transaction, idx) => (
-                      <tr
-                        key={transaction.id}
-                        className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
-                        onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td className="px-8 py-6 text-sm font-medium text-secondary-900">
-                          {formatDate(transaction.transactionDate)}
-                        </td>
-                        <td className="px-8 py-6">
-                          <Link
-                            to={`/people/${transaction.personId}`}
-                            onClick={e => e.stopPropagation()}
-                            className="text-primary-600 hover:text-primary-700 font-semibold text-sm hover:underline transition-colors"
+                    {loading ? (
+                      <>
+                        <SkeletonRow />
+                        <SkeletonRow />
+                        <SkeletonRow />
+                        <SkeletonRow />
+                        <SkeletonRow />
+                      </>
+                    ) : (
+                      <AnimatePresence>
+                        {sortedTransactions.map((transaction, idx) => (
+                          <motion.tr
+                            key={transaction.id}
+                            layout
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3, delay: idx * 0.05 }}
+                            className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
+                            onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
+                            style={{ cursor: 'pointer' }}
                           >
-                            {transaction.Person?.name || 'Unknown'}
-                          </Link>
-                        </td>
-                        <td className="px-8 py-6 text-secondary-900 font-medium">
-                          {transaction.description || '-'}
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
-                            {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Link
-                              to={`/transactions/edit/${transaction.id}`}
-                              onClick={e => e.stopPropagation()}
-                              className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
-                              title="Edit"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                              </svg>
-                            </Link>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                setSelectedTransaction(transaction);
-                                setShowDeleteDialog(true);
-                              }}
-                              className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
-                              title="Delete"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            <td className="px-8 py-6 text-sm font-medium text-secondary-900">
+                              {formatDate(transaction.transactionDate)}
+                            </td>
+                            <td className="px-8 py-6">
+                              <Link
+                                to={`/people/${transaction.personId}`}
+                                onClick={e => e.stopPropagation()}
+                                className="text-primary-600 hover:text-primary-700 font-semibold text-sm hover:underline transition-colors"
+                              >
+                                {transaction.Person?.name || 'Unknown'}
+                              </Link>
+                            </td>
+                            <td className="px-8 py-6 text-secondary-900 font-medium">
+                              {transaction.description || '-'}
+                            </td>
+                            <td className="px-8 py-6 text-right">
+                              <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
+                                {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
+                              </span>
+                            </td>
+                            <td className="px-8 py-6 text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <Link
+                                  to={`/transactions/edit/${transaction.id}`}
+                                  onClick={e => e.stopPropagation()}
+                                  className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
+                                  title="Edit"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                  </svg>
+                                </Link>
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setSelectedTransaction(transaction);
+                                    setShowDeleteDialog(true);
+                                  }}
+                                  className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
+                                  title="Delete"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </AnimatePresence>
+                    )}
                   </tbody>
                 </table>
               </div>
