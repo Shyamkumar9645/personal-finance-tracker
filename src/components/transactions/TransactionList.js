@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getTransactions, deleteTransaction, exportTransactions } from '../../api/transactionsApi';
 import { getPeople } from '../../api/peopleApi';
@@ -28,8 +28,52 @@ const TransactionList = () => {
     isMoneyReceived: '',
     isSettled: '',
   });
+  const [lastViewedTransactionId, setLastViewedTransactionId] = useState(null);
+  const tableRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // Effect to save scroll position and last viewed ID
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('transactionListScrollY', window.scrollY);
+      if (lastViewedTransactionId) {
+        sessionStorage.setItem('lastViewedTransactionId', lastViewedTransactionId);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [lastViewedTransactionId]);
+
+  // Effect to restore scroll position and highlight last viewed ID
+  useEffect(() => {
+    const storedScrollY = sessionStorage.getItem('transactionListScrollY');
+    const storedLastViewedId = sessionStorage.getItem('lastViewedTransactionId');
+
+    if (storedScrollY) {
+      window.scrollTo(0, parseInt(storedScrollY));
+      sessionStorage.removeItem('transactionListScrollY');
+    }
+
+    if (storedLastViewedId) {
+      setLastViewedTransactionId(storedLastViewedId);
+      sessionStorage.removeItem('lastViewedTransactionId');
+
+      // Highlight the row
+      const rowElement = document.getElementById(`transaction-row-${storedLastViewedId}`);
+      if (rowElement) {
+        rowElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900', 'ring-2', 'ring-yellow-500');
+        rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          rowElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900', 'ring-2', 'ring-yellow-500');
+        }, 3000);
+      }
+    }
+  }, []); // Run only once on mount
 
   useEffect(() => {
     const fetchData = async () => {
@@ -189,13 +233,17 @@ const TransactionList = () => {
                         {sortedTransactions.map((transaction, idx) => (
                           <motion.tr
                             key={transaction.id}
+                            id={`transaction-row-${transaction.id}`}
                             layout
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3, delay: idx * 0.05 }}
                             className={`hover:bg-primary-100/50 dark:hover:bg-primary-900/50 transition-all-ease glass-border ${idx % 2 === 0 ? 'bg-white/50 dark:bg-gray-800/50' : 'bg-primary-50/50 dark:bg-primary-900/50'}`}
-                            onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
+                            onClick={() => {
+                              setLastViewedTransactionId(transaction.id);
+                              navigate(`/transactions/edit/${transaction.id}`);
+                            }}
                             style={{ cursor: 'pointer' }}
                           >
                             <td className="px-6 py-4 text-sm font-medium text-secondary-900 dark:text-secondary-100">

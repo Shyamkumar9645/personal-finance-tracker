@@ -1,4 +1,3 @@
-// src/components/settings/ChangePassword.js
 import React, { useState } from 'react';
 import { changePassword } from '../../api/authApi';
 import ErrorAlert from '../ui/ErrorAlert';
@@ -54,13 +53,13 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="mb-8">
-      <h2 className="text-lg font-medium text-gray-700 mb-4">Change Password</h2>
+    <div className="mb-8 glass p-6 rounded-lg shadow-xl border border-gray-100/50 dark:border-gray-700/50 animate-fade-in-up">
+      <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Change Password</h2>
 
       {error && <ErrorAlert message={error} className="mb-4" />}
 
       {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">
+        <div className="bg-green-100/50 dark:bg-green-900/50 border border-green-400/50 dark:border-green-600/50 text-green-700 dark:text-green-300 px-4 py-3 rounded-md mb-4 glass-border">
           <span className="block sm:inline">{success}</span>
         </div>
       )}
@@ -68,7 +67,7 @@ const ChangePassword = () => {
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 mb-6">
           <div>
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Current Password
             </label>
             <input
@@ -78,12 +77,12 @@ const ChangePassword = () => {
               value={formData.currentPassword}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white/50 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 transition-colors-ease glass-border"
             />
           </div>
 
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               New Password
             </label>
             <input
@@ -94,16 +93,16 @@ const ChangePassword = () => {
               onChange={handleChange}
               required
               minLength={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white/50 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 transition-colors-ease glass-border"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Password must be at least 8 characters long and include uppercase, lowercase,
               number, and special character.
             </p>
           </div>
 
           <div>
-            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Confirm New Password
             </label>
             <input
@@ -113,7 +112,7 @@ const ChangePassword = () => {
               value={formData.confirmNewPassword}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white/50 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100 transition-colors-ease glass-border"
             />
           </div>
         </div>
@@ -122,9 +121,9 @@ const ChangePassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`${
-              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-            } text-white font-medium py-2 px-4 rounded-md`}
+            className={`bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition-colors-ease transform hover:scale-105 ${
+              loading ? 'bg-primary-400' : ''
+            }`}
           >
             {loading ? 'Changing Password...' : 'Change Password'}
           </button>

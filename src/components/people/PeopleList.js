@@ -27,9 +27,53 @@ const PeopleList = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [lastViewedPersonId, setLastViewedPersonId] = useState(null);
+  const tableRef = useRef(null);
 
   const searchTimeout = useRef();
   const navigate = useNavigate();
+
+  // Effect to save scroll position and last viewed ID
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('peopleListScrollY', window.scrollY);
+      if (lastViewedPersonId) {
+        sessionStorage.setItem('lastViewedPersonId', lastViewedPersonId);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [lastViewedPersonId]);
+
+  // Effect to restore scroll position and highlight last viewed ID
+  useEffect(() => {
+    const storedScrollY = sessionStorage.getItem('peopleListScrollY');
+    const storedLastViewedId = sessionStorage.getItem('lastViewedPersonId');
+
+    if (storedScrollY) {
+      window.scrollTo(0, parseInt(storedScrollY));
+      sessionStorage.removeItem('peopleListScrollY');
+    }
+
+    if (storedLastViewedId) {
+      setLastViewedPersonId(storedLastViewedId);
+      sessionStorage.removeItem('lastViewedPersonId');
+
+      // Highlight the row
+      const rowElement = document.getElementById(`person-row-${storedLastViewedId}`);
+      if (rowElement) {
+        rowElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900', 'ring-2', 'ring-yellow-500');
+        rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          rowElement.classList.remove('bg-yellow-100', 'dark:bg-yellow-900', 'ring-2', 'ring-yellow-500');
+        }, 3000);
+      }
+    }
+  }, []); // Run only once on mount
 
   useEffect(() => {
     setLoading(true);
@@ -217,6 +261,7 @@ const PeopleList = () => {
                     {people.map((person, idx) => (
                       <motion.tr
                         key={person.id}
+                        id={`person-row-${person.id}`}
                         layout
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -228,6 +273,7 @@ const PeopleList = () => {
                             e.target.closest('button') ||
                             e.target.closest('a')
                           ) return;
+                          setLastViewedPersonId(person.id);
                           navigate(`/people/edit/${person.id}`);
                         }}
                       >
