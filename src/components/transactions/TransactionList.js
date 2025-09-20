@@ -16,6 +16,7 @@ const TransactionList = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'transactionDate', direction: 'descending' });
 
   const navigate = useNavigate();
 
@@ -35,6 +36,30 @@ const TransactionList = () => {
     };
     fetchData();
   }, []);
+
+  const sortedTransactions = React.useMemo(() => {
+    let sortableItems = [...transactions];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [transactions, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleDelete = async () => {
     if (!selectedTransaction) return;
@@ -119,7 +144,7 @@ const TransactionList = () => {
                 <table className="w-full">
                   <thead className="bg-primary-50">
                     <tr>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Date</th>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>Date</th>
                       <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Person</th>
                       <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Description</th>
                       <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Amount</th>
@@ -127,7 +152,7 @@ const TransactionList = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((transaction, idx) => (
+                    {sortedTransactions.map((transaction, idx) => (
                       <tr
                         key={transaction.id}
                         className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
