@@ -75,15 +75,15 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="glass rounded-lg shadow-lg max-w-md w-full animate-scale-in border border-gray-100/50 dark:border-gray-700/50">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-gray-700/50 bg-primary-50/30 dark:bg-gray-800/30">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {isEditing ? 'Edit Transaction' : 'Add New Transaction'}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-gray-400 hover:text-gray-500 transition-colors-ease"
           >
             <XIcon className="h-5 w-5" />
           </button>
@@ -91,10 +91,10 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div className="bg-red-50/50 dark:bg-red-900/50 border-l-4 border-red-500 p-4 mb-6 rounded-lg glass-border">
               <div className="flex">
                 <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                 </div>
               </div>
             </div>
@@ -102,7 +102,7 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="person" className="form-label">
+              <label htmlFor="person" className="form-label text-secondary-700 dark:text-secondary-300">
                 Person Name*
               </label>
               <input
@@ -112,18 +112,18 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                 value={formData.person}
                 onChange={handleChange}
                 required
-                className="form-input"
+                className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
                 placeholder="Enter name"
               />
             </div>
 
             <div>
-              <label htmlFor="amount" className="form-label">
+              <label htmlFor="amount" className="form-label text-secondary-700 dark:text-secondary-300">
                 Amount*
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500">₹</span>
+                  <span className="text-gray-500 dark:text-gray-400">₹</span>
                 </div>
                 <input
                   type="number"
@@ -134,14 +134,14 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                   min="0.01"
                   step="0.01"
                   required
-                  className="form-input pl-8"
+                  className="form-input pl-8 bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
                   placeholder="0.00"
                 />
               </div>
             </div>
 
             <div>
-              <label className="form-label">
+              <label className="form-label text-secondary-700 dark:text-secondary-300">
                 Transaction Type*
               </label>
               <div className="flex space-x-4">
@@ -152,9 +152,9 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                     value="given"
                     checked={formData.type === 'given'}
                     onChange={handleChange}
-                    className="form-radio h-4 w-4 text-blue-600"
+                    className="form-radio h-4 w-4 text-blue-600 dark:text-blue-400 transition-colors-ease"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Money Given</span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Money Given</span>
                 </label>
                 <label className="inline-flex items-center">
                   <input
@@ -163,15 +163,15 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                     value="received"
                     checked={formData.type === 'received'}
                     onChange={handleChange}
-                    className="form-radio h-4 w-4 text-blue-600"
+                    className="form-radio h-4 w-4 text-blue-600 dark:text-blue-400 transition-colors-ease"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Money Received</span>
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Money Received</span>
                 </label>
               </div>
             </div>
 
             <div>
-              <label htmlFor="date" className="form-label">
+              <label htmlFor="date" className="form-label text-secondary-700 dark:text-secondary-300">
                 Date*
               </label>
               <input
@@ -181,12 +181,12 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                 value={formData.date}
                 onChange={handleChange}
                 required
-                className="form-input"
+                className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
               />
             </div>
 
             <div>
-              <label htmlFor="notes" className="form-label">
+              <label htmlFor="notes" className="form-label text-secondary-700 dark:text-secondary-300">
                 Notes
               </label>
               <textarea
@@ -195,7 +195,7 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
                 value={formData.notes}
                 onChange={handleChange}
                 rows="3"
-                className="form-input"
+                className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
                 placeholder="Add notes about this transaction"
               ></textarea>
             </div>
@@ -205,14 +205,14 @@ const TransactionForm = ({ transaction, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
+              className="btn btn-secondary bg-gray-200/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-300/50 dark:hover:bg-gray-600/50 transition-colors-ease glass-border"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary flex items-center"
+              className="btn btn-primary flex items-center bg-primary-600 hover:bg-primary-700 text-white transition-colors-ease transform hover:scale-105"
             >
               {loading ? (
                 <>

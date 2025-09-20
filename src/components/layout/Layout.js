@@ -17,9 +17,9 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors-ease overflow-hidden">
       <Navbar />
-      <main className="py-4">
+      <main className="flex-1 overflow-auto p-4 glass m-4 rounded-xl shadow-lg animate-fade-in-up transition-all-ease">
         <Outlet />
       </main>
     </div>

@@ -88,6 +88,13 @@ module.exports = {
         'shimmer': 'shimmer 2s linear infinite',
         'float': 'float 3s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'wiggle': 'wiggle 1s ease-in-out infinite',
+        'background-pan': 'backgroundPan 10s linear infinite alternate',
+        'border-pulse': 'borderPulse 2s infinite',
+        'pop-in': 'popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+        'slide-down': 'slideDown 0.5s ease-out',
+        'slide-up': 'slideUp 0.5s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -136,6 +143,30 @@ module.exports = {
           '0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)' },
           '50%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.8)' },
         },
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(-3deg)' },
+          '50%': { transform: 'rotate(3deg)' },
+        },
+        backgroundPan: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '100% 50%' },
+        },
+        borderPulse: {
+          '0%, 100%': { borderColor: 'rgba(59, 130, 246, 0.4)' },
+          '50%': { borderColor: 'rgba(59, 130, 246, 0.8)' },
+        },
+        popIn: {
+          '0%': { opacity: '0', transform: 'scale(0.5)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        slideDown: {
+          '0%': { opacity: '0', transform: 'translateY(-100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -169,6 +200,11 @@ module.exports = {
       },
       transitionTimingFunction: {
         'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+      },
+      transitionProperty: {
+        'height': 'height',
+        'spacing': 'margin, padding',
+        'colors-shadow': 'background-color, border-color, color, fill, stroke, opacity, box-shadow, transform',
       },
     },
   },

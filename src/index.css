@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Glassmorphism Effect */
+.glass {
+  background-color: rgba(255, 255, 255, 0.15); /* Slightly visible background */
+  backdrop-filter: blur(10px) saturate(180%); /* Frosted glass effect */
+  border: 1px solid rgba(209, 213, 219, 0.3); /* Light border */
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* Subtle shadow */
+}
+
+.glass-border {
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+/* Custom scrollbar for a more modern look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.7);
+}
+
+/* Smooth transitions for various properties */
+.transition-all-ease {
+  transition: all 0.3s ease-in-out;
+}
+
+.transition-transform-ease {
+  transition: transform 0.3s ease-in-out;
+}
+
+.transition-opacity-ease {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.transition-colors-ease {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Custom scrollbar */

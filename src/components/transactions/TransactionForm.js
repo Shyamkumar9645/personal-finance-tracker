@@ -19,7 +19,9 @@ const TransactionForm = () => {
     applyInterest: false,
     interestType: 'none',
     interestRate: '',
-    compoundFrequency: ''
+    compoundFrequency: '',
+    interestStartDate: new Date().toISOString().split('T')[0], // Default to transactionDate
+    interestEndDate: new Date().toISOString().split('T')[0], // Default to current date
   });
 
   const [people, setPeople] = useState([]);
@@ -27,7 +29,7 @@ const TransactionForm = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isEdit, setIsEdit] = useState(false);
+  const [isEditing, setIsEdit] = useState(false); // Correctly define isEditing
   const [showInterestSettings, setShowInterestSettings] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -119,7 +121,7 @@ const TransactionForm = () => {
     };
     try {
       setLoading(true);
-      if (isEdit) {
+      if (isEditing) {
         await updateTransaction(id, transactionData);
         setSuccess('Transaction updated successfully!');
       } else {
@@ -141,7 +143,7 @@ const TransactionForm = () => {
         setShowInterestSettings(false);
       }
       setTimeout(() => {
-        if (isEdit || !formData.personId) {
+        if (isEditing || !formData.personId) {
           navigate('/transactions');
         } else {
           navigate(`/people/${formData.personId}`);
@@ -163,59 +165,33 @@ const TransactionForm = () => {
     : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
-      <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in">
-        {/* Back Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center text-primary-600 hover:text-primary-800 transition"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back
-          </button>
-        </div>
-
-        {/* Card */}
-        <div className="bg-white shadow-xl rounded-3xl max-w-4xl w-full mx-auto overflow-hidden border border-gray-100">
-          <div className="px-8 pt-8 pb-4 border-b border-secondary-100 bg-primary-50">
-            <h1 className="text-2xl font-bold text-primary-700 flex items-center">
-              <span className="mr-2">{isEdit ? 'Edit' : 'Add'} Transaction</span>
-              <span className="inline-block w-6 h-6 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
-                💳
-              </span>
-            </h1>
-            {formData.personId && (
-              <p className="text-secondary-500 mt-1">
-                For <span className="font-medium text-secondary-700">{currentPersonName}</span>
-              </p>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 transition-colors-ease">
+      <div className="container mx-auto px-4 py-8 max-w-3xl animate-fade-in">
+        <div className="glass rounded-3xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 overflow-hidden mb-8 animate-fade-in-down">
+          <div className="px-8 py-6 border-b border-gray-100/50 dark:border-gray-700/50 bg-primary-50/30 dark:bg-gray-800/30 flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary-100/50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center animate-glow">
+              <span className="text-xl text-primary-600 dark:text-primary-400">{isEditing ? '✍️' : '✨'}</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-300">{isEditing ? 'Edit Transaction' : 'Add New Transaction'}</h1>
+              <p className="text-primary-500 dark:text-primary-400 text-sm">{isEditing ? 'Modify an existing financial record' : 'Create a new financial record'}</p>
+            </div>
           </div>
-
-          {error && <ErrorAlert message={error} className="mx-8 mt-6" />}
-          {success && (
-            <div className="mx-8 mt-6 bg-success-50 border-l-4 border-success-500 p-4 rounded-md" role="status" aria-live="polite">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-success-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-success-700">{success}</p>
+          <form onSubmit={handleSubmit} className="p-8">
+            {error && (
+              <div className="bg-red-50/50 dark:bg-red-900/50 border-l-4 border-red-500 p-4 mb-6 rounded-lg glass-border">
+                <div className="flex">
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <form onSubmit={handleSubmit} className="px-8 py-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Person */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="personId" className="block mb-2 text-sm font-medium text-secondary-700">
-                  Person <span className="text-danger-500">*</span>
+                <label htmlFor="personId" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Person*
                 </label>
                 <select
                   id="personId"
@@ -223,27 +199,41 @@ const TransactionForm = () => {
                   value={formData.personId}
                   onChange={handleChange}
                   required
-                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                  disabled={!!location.search.includes('personId=')}
+                  className="form-select bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
                 >
                   <option value="">Select a person</option>
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.name}
-                    </option>
+                  {people.map(person => (
+                    <option key={person.id} value={person.id}>{person.name}</option>
                   ))}
                 </select>
-                {people.length === 0 && (
-                  <p className="mt-1 text-xs text-danger-600">
-                    No people found. Please add a person first.
-                  </p>
-                )}
               </div>
 
-              {/* Transaction Date */}
               <div>
-                <label htmlFor="transactionDate" className="block mb-2 text-sm font-medium text-secondary-700">
-                  Transaction Date <span className="text-danger-500">*</span>
+                <label htmlFor="amount" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Amount*
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400">₹</span>
+                  </div>
+                  <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    min="0.01"
+                    step="0.01"
+                    required
+                    className="form-input pl-8 bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="transactionDate" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Date*
                 </label>
                 <input
                   type="date"
@@ -252,73 +242,107 @@ const TransactionForm = () => {
                   value={formData.transactionDate}
                   onChange={handleChange}
                   required
-                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
                 />
               </div>
 
-              {/* Amount */}
               <div>
-                <label htmlFor="amount" className="block mb-2 text-sm font-medium text-secondary-700">
-                  Amount <span className="text-danger-500">*</span>
+                <label htmlFor="isMoneyReceived" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Type*
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-secondary-500">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    id="amount"
-                    name="amount"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    required
-                    min="0.01"
-                    step="0.01"
-                    className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-2.5"
-                    placeholder="0.00"
-                  />
-                </div>
+                <select
+                  id="isMoneyReceived"
+                  name="isMoneyReceived"
+                  value={formData.isMoneyReceived}
+                  onChange={handleChange}
+                  required
+                  className="form-select bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                >
+                  <option value="">Select type</option>
+                  <option value="false">Money Given</option>
+                  <option value="true">Money Received</option>
+                </select>
               </div>
 
-              {/* Transaction Type */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-secondary-700">
-                  Transaction Type <span className="text-danger-500">*</span>
+                <label htmlFor="isSettled" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Status*
                 </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="isMoneyReceived"
-                      checked={formData.isMoneyReceived === true}
-                      onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: true }))}
-                      className="h-4 w-4 text-success-600 focus:ring-success-500 border-secondary-300"
-                    />
-                    <span className="ml-2 text-sm text-success-700 font-medium">
-                      Money Received
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="isMoneyReceived"
-                      checked={formData.isMoneyReceived === false}
-                      onChange={() => setFormData(prev => ({ ...prev, isMoneyReceived: false }))}
-                      className="h-4 w-4 text-danger-600 focus:ring-danger-500 border-secondary-300"
-                    />
-                    <span className="ml-2 text-sm text-danger-700 font-medium">
-                      Money Given
-                    </span>
-                  </label>
-                </div>
-                <p className="text-xs text-secondary-500 mt-1">
-                  Select whether you received or gave money
-                </p>
+                <select
+                  id="isSettled"
+                  name="isSettled"
+                  value={formData.isSettled}
+                  onChange={handleChange}
+                  required
+                  className="form-select bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                >
+                  <option value="">Select status</option>
+                  <option value="false">Outstanding</option>
+                  <option value="true">Settled</option>
+                </select>
               </div>
 
-              {/* Category */}
               <div>
-                <label htmlFor="category" className="block mb-2 text-sm font-medium text-secondary-700">
+                <label htmlFor="interestRate" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Interest Rate (% per annum)
+                </label>
+                <input
+                  type="number"
+                  id="interestRate"
+                  name="interestRate"
+                  value={formData.interestRate}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                  placeholder="e.g., 5.00"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="interestStartDate" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Interest Start Date
+                </label>
+                <input
+                  type="date"
+                  id="interestStartDate"
+                  name="interestStartDate"
+                  value={formData.interestStartDate}
+                  onChange={handleChange}
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="interestEndDate" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Interest End Date
+                </label>
+                <input
+                  type="date"
+                  id="interestEndDate"
+                  name="interestEndDate"
+                  value={formData.interestEndDate}
+                  onChange={handleChange}
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="reminderDate" className="form-label text-secondary-700 dark:text-secondary-300">
+                  Reminder Date
+                </label>
+                <input
+                  type="date"
+                  id="reminderDate"
+                  name="reminderDate"
+                  value={formData.reminderDate}
+                  onChange={handleChange}
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="category" className="form-label text-secondary-700 dark:text-secondary-300">
                   Category
                 </label>
                 <input
@@ -327,70 +351,29 @@ const TransactionForm = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                  placeholder="e.g. Lunch, Rent, Travel"
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                  placeholder="e.g., Food, Transport, Loan"
                 />
               </div>
 
-              {/* Payment Method */}
               <div>
-                <label htmlFor="paymentMethod" className="block mb-2 text-sm font-medium text-secondary-700">
+                <label htmlFor="paymentMethod" className="form-label text-secondary-700 dark:text-secondary-300">
                   Payment Method
                 </label>
-                <select
+                <input
+                  type="text"
                   id="paymentMethod"
                   name="paymentMethod"
                   value={formData.paymentMethod}
                   onChange={handleChange}
-                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                >
-                  <option value="">Select a payment method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="Debit Card">Debit Card</option>
-                  <option value="Digital Wallet">Digital Wallet</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              {/* Settled */}
-              <div className="flex items-center mt-2">
-                <input
-                  type="checkbox"
-                  id="isSettled"
-                  name="isSettled"
-                  checked={formData.isSettled}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
+                  className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                  placeholder="e.g., Cash, Bank Transfer, UPI"
                 />
-                <label htmlFor="isSettled" className="ml-2 text-sm text-secondary-700">
-                  This transaction is settled (debt is paid)
-                </label>
-              </div>
-
-              {/* Reminder Date */}
-              <div>
-                <label htmlFor="reminderDate" className="block mb-2 text-sm font-medium text-secondary-700">
-                  Reminder Date <span className="ml-2 text-xs text-secondary-500">(Optional)</span>
-                </label>
-                <input
-                  type="date"
-                  id="reminderDate"
-                  name="reminderDate"
-                  value={formData.reminderDate}
-                  onChange={handleChange}
-                  className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                <p className="mt-1 text-xs text-secondary-500">Set a date to remind yourself about this transaction</p>
               </div>
             </div>
 
-            {/* Description */}
-            <div>
-              <label htmlFor="description" className="block mb-2 text-sm font-medium text-secondary-700">
+            <div className="mt-6">
+              <label htmlFor="description" className="form-label text-secondary-700 dark:text-secondary-300">
                 Description
               </label>
               <textarea
@@ -399,147 +382,38 @@ const TransactionForm = () => {
                 value={formData.description}
                 onChange={handleChange}
                 rows="3"
-                className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                placeholder="Add notes about this transaction"
+                className="form-input bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 transition-colors-ease glass-border"
+                placeholder="e.g., Loan for car, payment for rent, etc."
               ></textarea>
             </div>
 
-            {/* Interest Section */}
-            <div className="border-t border-secondary-200 pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="applyInterest"
-                    name="applyInterest"
-                    checked={formData.applyInterest}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
-                  />
-                  <label htmlFor="applyInterest" className="ml-2 text-sm font-medium text-secondary-700">
-                    Apply Interest to this Transaction
-                  </label>
-                </div>
-                {formData.applyInterest && (
-                  <button
-                    type="button"
-                    onClick={() => setShowInterestSettings(!showInterestSettings)}
-                    className="text-sm text-primary-600 hover:underline"
-                  >
-                    {showInterestSettings ? 'Hide Interest Settings' : 'Show Interest Settings'}
-                  </button>
-                )}
-              </div>
-              {formData.applyInterest && showInterestSettings && (
-                <div className="bg-secondary-50 p-6 rounded-lg border border-secondary-200 animate-fade-in">
-                  <h3 className="text-md font-semibold text-secondary-700 mb-4">Interest Settings</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="interestType" className="block mb-2 text-sm font-medium text-secondary-700">
-                        Interest Type <span className="text-danger-500">*</span>
-                      </label>
-                      <select
-                        id="interestType"
-                        name="interestType"
-                        value={formData.interestType}
-                        onChange={handleChange}
-                        className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                        required={formData.applyInterest}
-                      >
-                        <option value="none">Select interest type</option>
-                        <option value="simple">Simple Interest</option>
-                        <option value="compound">Compound Interest</option>
-                      </select>
-                      {formData.interestType === 'simple' && (
-                        <p className="mt-1 text-xs text-secondary-500">
-                          Simple interest is calculated only on the principal amount.
-                        </p>
-                      )}
-                      {formData.interestType === 'compound' && (
-                        <p className="mt-1 text-xs text-secondary-500">
-                          Compound interest is calculated on the principal amount and the accumulated interest.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label htmlFor="interestRate" className="block mb-2 text-sm font-medium text-secondary-700">
-                        Annual Interest Rate (%) <span className="text-danger-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        id="interestRate"
-                        name="interestRate"
-                        value={formData.interestRate}
-                        onChange={handleChange}
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g. 10.00"
-                        className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                        required={formData.applyInterest}
-                      />
-                      <p className="mt-1 text-xs text-secondary-500">
-                        Enter the annual interest rate as a percentage (e.g., 10 for 10%)
-                      </p>
-                    </div>
-                    {formData.interestType === 'compound' && (
-                      <div>
-                        <label htmlFor="compoundFrequency" className="block mb-2 text-sm font-medium text-secondary-700">
-                          Compound Frequency <span className="text-danger-500">*</span>
-                        </label>
-                        <select
-                          id="compoundFrequency"
-                          name="compoundFrequency"
-                          value={formData.compoundFrequency}
-                          onChange={handleChange}
-                          className="bg-gray-50 border border-secondary-300 text-secondary-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-                          required={formData.interestType === 'compound'}
-                        >
-                          <option value="">Select frequency</option>
-                          <option value="1">Annually (1/year)</option>
-                          <option value="2">Semi-Annually (2/year)</option>
-                          <option value="4">Quarterly (4/year)</option>
-                          <option value="12">Monthly (12/year)</option>
-                          <option value="365">Daily (365/year)</option>
-                        </select>
-                        <p className="mt-1 text-xs text-secondary-500">
-                          How often the interest is compounded per year
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Form Actions */}
-            <div className="flex justify-end space-x-4 pt-6">
+            <div className="mt-8 flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="btn btn-secondary px-6 py-2 rounded-lg"
-                disabled={loading}
+                className="btn btn-secondary bg-gray-200/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-300/50 dark:hover:bg-gray-600/50 transition-colors-ease glass-border"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary px-6 py-2 rounded-lg flex items-center"
+                className="btn btn-primary flex items-center bg-primary-600 hover:bg-primary-700 text-white transition-colors-ease transform hover:scale-105"
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Processing...
                   </>
                 ) : (
-                  <>
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  <> 
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                     </svg>
-                    {isEdit ? 'Update Transaction' : 'Save Transaction'}
+                    {isEditing ? 'Update Transaction' : 'Add Transaction'}
                   </>
                 )}
               </button>

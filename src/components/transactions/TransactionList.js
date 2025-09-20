@@ -102,22 +102,22 @@ const TransactionList = () => {
   if (error) return <ErrorAlert message={error} />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 transition-colors-ease">
       <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in">
         {/* Header */}
-        <div className="bg-white rounded-3xl shadow border border-gray-100 overflow-hidden mb-8">
-          <div className="px-8 py-6 border-b border-gray-100 bg-primary-50 flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl text-primary-600">💳</span>
+        <div className="glass rounded-3xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 overflow-hidden mb-8 animate-fade-in-down">
+          <div className="px-8 py-6 border-b border-gray-100/50 dark:border-gray-700/50 bg-primary-50/30 dark:bg-gray-800/30 flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary-100/50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center animate-glow">
+              <span className="text-xl text-primary-600 dark:text-primary-400">💳</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary-700">All Transactions</h1>
-              <p className="text-primary-500 text-sm">Track and manage all your financial activities</p>
+              <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-300">All Transactions</h1>
+              <p className="text-primary-500 dark:text-primary-400 text-sm">Track and manage all your financial activities</p>
             </div>
-            <div className="ml-auto flex gap-2">
+            <div className="ml-auto flex gap-2 animate-fade-in-right">
               <Link
                 to="/transactions/new"
-                className="btn btn-primary flex items-center shadow hover:shadow-md transition-all duration-300 text-white bg-primary-600 hover:bg-primary-700 rounded-lg text-sm px-5 py-2.5"
+                className="btn btn-primary flex items-center shadow hover:shadow-md transition-all-ease text-white bg-primary-600 hover:bg-primary-700 rounded-lg text-sm px-5 py-2.5 transform hover:scale-105"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -126,7 +126,7 @@ const TransactionList = () => {
               </Link>
               <button
                 onClick={handleExport}
-                className="btn btn-secondary flex items-center shadow hover:shadow-md transition-all duration-300 text-primary-600 bg-white border border-primary-600 hover:bg-primary-50 rounded-lg text-sm px-5 py-2.5"
+                className="btn btn-secondary flex items-center shadow hover:shadow-md transition-all-ease text-primary-600 dark:text-primary-300 bg-white/50 dark:bg-gray-700/50 border border-primary-600 dark:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-gray-600/50 rounded-lg text-sm px-5 py-2.5 transform hover:scale-105"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -138,15 +138,15 @@ const TransactionList = () => {
           <SearchFilter params={searchParams} onChange={handleFilterChange} people={people} />
           <div className="p-8">
             {transactions.length === 0 ? (
-              <div className="p-16 text-center">
-                <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-4xl text-primary-600">📋</span>
+              <div className="p-16 text-center glass rounded-3xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 animate-fade-in">
+                <div className="w-24 h-24 bg-primary-100/50 dark:bg-primary-900/50 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-in">
+                  <span className="text-4xl text-primary-600 dark:text-primary-400">📋</span>
                 </div>
-                <h3 className="text-2xl font-bold text-primary-700 mb-4">No transactions found</h3>
-                <p className="text-secondary-500 text-lg mb-8">Start by adding your first transaction</p>
+                <h3 className="text-2xl font-bold text-primary-700 dark:text-primary-300 mb-4">No transactions found</h3>
+                <p className="text-secondary-500 dark:text-secondary-400 text-lg mb-8">Start by adding your first transaction</p>
                 <Link
                   to="/transactions/new"
-                  className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded-lg text-sm px-6 py-3 transition-colors inline-flex items-center"
+                  className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded-lg text-sm px-6 py-3 transition-colors-ease inline-flex items-center transform hover:scale-105"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -155,11 +155,11 @@ const TransactionList = () => {
                 </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto glass rounded-xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 animate-fade-in-up">
                 <table className="w-full">
-                  <thead className="bg-primary-50">
+                  <thead className="bg-primary-50/30 dark:bg-gray-800/30 glass-border">
                     <tr>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('transactionDate')}>
                         <div className="flex items-center">
                           Date
                           {sortConfig.key === 'transactionDate' && (
@@ -169,10 +169,10 @@ const TransactionList = () => {
                           )}
                         </div>
                       </th>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Person</th>
-                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 uppercase tracking-wider">Description</th>
-                      <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Amount</th>
-                      <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 uppercase tracking-wider">Actions</th>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider">Person</th>
+                      <th className="px-8 py-4 text-left text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider">Description</th>
+                      <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider">Amount</th>
+                      <th className="px-8 py-4 text-right text-sm font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -194,36 +194,36 @@ const TransactionList = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3, delay: idx * 0.05 }}
-                            className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'}`}
+                            className={`hover:bg-primary-100/50 dark:hover:bg-primary-900/50 transition-all-ease glass-border ${idx % 2 === 0 ? 'bg-white/50 dark:bg-gray-800/50' : 'bg-primary-50/50 dark:bg-primary-900/50'}`}
                             onClick={() => navigate(`/transactions/edit/${transaction.id}`)}
                             style={{ cursor: 'pointer' }}
                           >
-                            <td className="px-8 py-6 text-sm font-medium text-secondary-900">
+                            <td className="px-6 py-4 text-sm font-medium text-secondary-900 dark:text-secondary-100">
                               {formatDate(transaction.transactionDate)}
                             </td>
-                            <td className="px-8 py-6">
+                            <td className="px-6 py-4">
                               <Link
                                 to={`/people/${transaction.personId}`}
                                 onClick={e => e.stopPropagation()}
-                                className="text-primary-600 hover:text-primary-700 font-semibold text-sm hover:underline transition-colors"
+                                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold text-sm hover:underline transition-colors-ease"
                               >
                                 {transaction.Person?.name || 'Unknown'}
                               </Link>
                             </td>
-                            <td className="px-8 py-6 text-secondary-900 font-medium">
+                            <td className="px-6 py-4 text-secondary-900 dark:text-secondary-100 font-medium">
                               {transaction.description || '-'}
                             </td>
-                            <td className="px-8 py-6 text-right">
-                              <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
+                            <td className="px-6 py-4 text-right">
+                              <span className={`font-bold text-lg ${transaction.isMoneyReceived ? 'text-primary-700 dark:text-primary-300' : 'text-red-600 dark:text-red-400'}`}>
                                 {transaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(transaction.amount))}
                               </span>
                             </td>
-                            <td className="px-8 py-6 text-right">
+                            <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end space-x-2">
                                 <Link
                                   to={`/transactions/edit/${transaction.id}`}
                                   onClick={e => e.stopPropagation()}
-                                  className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
+                                  className="w-8 h-8 bg-primary-100/50 dark:bg-primary-900/50 hover:bg-primary-200/50 dark:hover:bg-primary-800/50 text-primary-600 dark:text-primary-400 rounded-lg flex items-center justify-center transition-colors-ease transform hover:scale-110"
                                   title="Edit"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@ const TransactionList = () => {
                                     setSelectedTransaction(transaction);
                                     setShowDeleteDialog(true);
                                   }}
-                                  className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
+                                  className="w-8 h-8 bg-red-100/50 dark:bg-red-900/50 hover:bg-red-200/50 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center transition-colors-ease transform hover:scale-110"
                                   title="Delete"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,24 +262,24 @@ const TransactionList = () => {
           message={
             selectedTransaction
               ? <>
-                  <p className="text-secondary-700 mb-2">Are you sure you want to delete this transaction?</p>
-                  <div className="bg-primary-50 rounded-2xl p-4 border border-primary-100">
+                  <p className="text-secondary-700 dark:text-secondary-300 mb-2">Are you sure you want to delete this transaction?</p>
+                  <div className="bg-primary-50/50 dark:bg-primary-900/50 rounded-2xl p-4 border border-primary-100/50 dark:border-primary-800/50 glass-border">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-secondary-600 font-medium">Person:</span>
-                      <span className="font-bold text-secondary-900">{selectedTransaction.Person?.name}</span>
+                      <span className="text-secondary-600 dark:text-secondary-400 font-medium">Person:</span>
+                      <span className="font-bold text-secondary-900 dark:text-secondary-100">{selectedTransaction.Person?.name}</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-secondary-600 font-medium">Date:</span>
-                      <span className="font-bold text-secondary-900">{formatDate(selectedTransaction.transactionDate)}</span>
+                      <span className="text-secondary-600 dark:text-secondary-400 font-medium">Date:</span>
+                      <span className="font-bold text-secondary-900 dark:text-secondary-100">{formatDate(selectedTransaction.transactionDate)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-secondary-600 font-medium">Amount:</span>
-                      <span className={`font-bold ${selectedTransaction.isMoneyReceived ? 'text-primary-700' : 'text-red-600'}`}>
+                      <span className="text-secondary-600 dark:text-secondary-400 font-medium">Amount:</span>
+                      <span className={`font-bold ${selectedTransaction.isMoneyReceived ? 'text-primary-700 dark:text-primary-300' : 'text-red-600 dark:text-red-400'}`}>
                         {selectedTransaction.isMoneyReceived ? '+' : '-'} {formatCurrency(Math.abs(selectedTransaction.amount))}
                       </span>
                     </div>
                   </div>
-                  <p className="mt-4 text-red-600 text-sm font-semibold flex items-center">
+                  <p className="mt-4 text-red-600 dark:text-red-400 text-sm font-semibold flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>

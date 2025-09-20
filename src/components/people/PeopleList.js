@@ -119,22 +119,22 @@ const PeopleList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 transition-colors-ease">
       <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in">
         {/* Header */}
-        <div className="bg-white rounded-3xl shadow border border-gray-100 overflow-hidden mb-8">
-          <div className="px-8 py-6 border-b border-gray-100 bg-primary-50 flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl text-primary-600">👤</span>
+        <div className="glass rounded-3xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 overflow-hidden mb-8 animate-fade-in-down">
+          <div className="px-8 py-6 border-b border-gray-100/50 dark:border-gray-700/50 bg-primary-50/30 dark:bg-gray-800/30 flex items-center space-x-3">
+            <div className="w-10 h-10 bg-primary-100/50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center animate-glow">
+              <span className="text-xl text-primary-600 dark:text-primary-400">👤</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary-700">All People</h1>
-              <p className="text-primary-500 text-sm">View and manage all your contacts</p>
+              <h1 className="text-2xl font-bold text-primary-700 dark:text-primary-300">All People</h1>
+              <p className="text-primary-500 dark:text-primary-400 text-sm">View and manage all your contacts</p>
             </div>
-            <div className="ml-auto flex gap-2">
+            <div className="ml-auto flex gap-2 animate-fade-in-right">
               <Link
                 to="/people/new"
-                className="btn btn-primary flex items-center shadow hover:shadow-md transition-all duration-300 text-white bg-primary-600 hover:bg-primary-700 rounded-lg text-sm px-5 py-2.5"
+                className="btn btn-primary flex items-center shadow hover:shadow-md transition-all-ease text-white bg-primary-600 hover:bg-primary-700 rounded-lg text-sm px-5 py-2.5 transform hover:scale-105"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
@@ -150,7 +150,7 @@ const PeopleList = () => {
             <div className="mb-6">
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-secondary-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <svg className="h-5 w-5 text-secondary-400 dark:text-secondary-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -159,13 +159,13 @@ const PeopleList = () => {
                   placeholder="Search by name..."
                   value={searchTerm}
                   onChange={handleSearch}
-                  className="block w-full pl-10 pr-10 py-2 border border-secondary-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  className="block w-full pl-10 pr-10 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white/50 dark:bg-gray-700/50 text-secondary-900 dark:text-secondary-100 transition-colors-ease"
                   aria-label="Search people"
                 />
                 {searchTerm && (
                   <button
                     onClick={clearSearch}
-                    className="absolute inset-y-0 right-2 flex items-center text-secondary-400 hover:text-secondary-600"
+                    className="absolute inset-y-0 right-2 flex items-center text-secondary-400 hover:text-secondary-600 transition-colors-ease"
                     aria-label="Clear search"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,15 +177,15 @@ const PeopleList = () => {
             </div>
             {/* People Table */}
             {people.length === 0 ? (
-              <div className="p-16 text-center">
-                <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-4xl text-primary-600">👤</span>
+              <div className="p-16 text-center glass rounded-3xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 animate-fade-in">
+                <div className="w-24 h-24 bg-primary-100/50 dark:bg-primary-900/50 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-in">
+                  <span className="text-4xl text-primary-600 dark:text-primary-400">👤</span>
                 </div>
-                <h3 className="text-2xl font-bold text-primary-700 mb-4">No people found</h3>
-                <p className="text-secondary-500 text-lg mb-8">Start by adding your first contact</p>
+                <h3 className="text-2xl font-bold text-primary-700 dark:text-primary-300 mb-4">No people found</h3>
+                <p className="text-secondary-500 dark:text-secondary-400 text-lg mb-8">Start by adding your first contact</p>
                 <Link
                   to="/people/new"
-                  className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded-lg text-sm px-6 py-3 transition-colors inline-flex items-center"
+                  className="text-white bg-primary-600 hover:bg-primary-700 font-medium rounded-lg text-sm px-6 py-3 transition-colors-ease inline-flex items-center transform hover:scale-105"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
@@ -194,23 +194,23 @@ const PeopleList = () => {
                 </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl shadow bg-white">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-primary-50 sticky top-0 z-10">
+              <div className="overflow-x-auto glass rounded-xl shadow-xl border border-gray-100/50 dark:border-gray-700/50 animate-fade-in-up">
+                <table className="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50 text-sm">
+                  <thead className="bg-primary-50/30 dark:bg-gray-800/30 sticky top-0 z-10 glass-border">
                     <tr>
                       <th
-                        className="px-8 py-4 text-left font-bold text-primary-700 uppercase tracking-wider cursor-pointer"
+                        className="px-8 py-4 text-left font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('name')}
                       >
                         Name
                       </th>
                       <th
-                        className="px-8 py-4 text-right font-bold text-primary-700 uppercase tracking-wider cursor-pointer"
+                        className="px-8 py-4 text-right font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('balance')}
                       >
                         Balance
                       </th>
-                      <th className="px-8 py-4 text-right font-bold text-primary-700 uppercase tracking-wider">Actions</th>
+                      <th className="px-8 py-4 text-right font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <AnimatePresence>
@@ -222,7 +222,7 @@ const PeopleList = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3, delay: idx * 0.05 }}
-                        className={`hover:bg-primary-50 transition-all ${idx % 2 === 0 ? 'bg-white' : 'bg-primary-50'} cursor-pointer`}
+                        className={`hover:bg-primary-100/50 dark:hover:bg-primary-900/50 transition-all-ease glass-border ${idx % 2 === 0 ? 'bg-white/50 dark:bg-gray-800/50' : 'bg-primary-50/50 dark:bg-primary-900/50'} cursor-pointer`}
                         onClick={e => {
                           if (
                             e.target.closest('button') ||
@@ -231,36 +231,36 @@ const PeopleList = () => {
                           navigate(`/people/edit/${person.id}`);
                         }}
                       >
-                        <td className="px-8 py-6 font-medium whitespace-nowrap">
+                        <td className="px-6 py-4 font-medium whitespace-nowrap">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-primary-100 rounded-xl flex items-center justify-center text-primary-700 font-semibold">
+                            <div className="w-8 h-8 bg-primary-100/50 dark:bg-primary-900/50 rounded-xl flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold">
                               {person.name[0].toUpperCase()}
                             </div>
-                            <span className="text-primary-900 font-medium">{person.name}</span>
+                            <span className="text-primary-900 dark:text-primary-100 font-medium">{person.name}</span>
                           </div>
                         </td>
-                        <td className={`px-8 py-6 text-right font-medium whitespace-nowrap ${
+                        <td className={`px-6 py-4 text-right font-medium whitespace-nowrap ${
                           parseFloat(person.balance) > 0
-                            ? 'text-success-600'
+                            ? 'text-success-600 dark:text-success-400'
                             : parseFloat(person.balance) < 0
-                              ? 'text-danger-600'
-                              : 'text-secondary-500'
+                              ? 'text-danger-600 dark:text-danger-400'
+                              : 'text-secondary-500 dark:text-secondary-400'
                         }`}>
                           <span className="font-bold text-lg">
                             {formatCurrency(parseFloat(person.balance))}
                           </span>
                           {parseFloat(person.balance) > 0 && (
-                            <div className="text-xs text-secondary-500 mt-1">They owe you</div>
+                            <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">They owe you</div>
                           )}
                           {parseFloat(person.balance) < 0 && (
-                            <div className="text-xs text-secondary-500 mt-1">You owe them</div>
+                            <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">You owe them</div>
                           )}
                         </td>
-                        <td className="px-8 py-6 text-right whitespace-nowrap">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end space-x-2">
                             <Link
                               to={`/people/edit/${person.id}`}
-                              className="w-8 h-8 bg-primary-100 hover:bg-primary-200 text-primary-600 rounded-lg flex items-center justify-center transition-colors"
+                              className="w-8 h-8 bg-primary-100/50 dark:bg-primary-900/50 hover:bg-primary-200/50 dark:hover:bg-primary-800/50 text-primary-600 dark:text-primary-400 rounded-lg flex items-center justify-center transition-colors-ease transform hover:scale-110"
                               title="Edit"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,7 +274,7 @@ const PeopleList = () => {
                                 setShowDeleteDialog(true);
                                 setDeleteError('');
                               }}
-                              className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-colors"
+                              className="w-8 h-8 bg-red-100/50 dark:bg-red-900/50 hover:bg-red-200/50 dark:hover:bg-red-800/50 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center transition-colors-ease transform hover:scale-110"
                               title="Delete"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -294,7 +294,7 @@ const PeopleList = () => {
               <nav className="flex justify-center mt-6" aria-label="Pagination">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1 mx-1 rounded bg-secondary-100 hover:bg-secondary-200"
+                  className="px-3 py-1 mx-1 rounded bg-secondary-100/50 dark:bg-secondary-800/50 hover:bg-secondary-200/50 dark:hover:bg-secondary-700/50 text-secondary-700 dark:text-secondary-300 transition-colors-ease glass-border"
                   disabled={currentPage === 1}
                   aria-label="Previous Page"
                 >
@@ -304,7 +304,7 @@ const PeopleList = () => {
                   <button
                     key={idx}
                     onClick={() => setCurrentPage(idx + 1)}
-                    className={`px-3 py-1 mx-1 rounded ${currentPage === idx + 1 ? 'bg-primary-200 font-bold' : 'bg-secondary-100 hover:bg-secondary-200'}`}
+                    className={`px-3 py-1 mx-1 rounded transition-colors-ease glass-border ${currentPage === idx + 1 ? 'bg-primary-200/70 dark:bg-primary-700/70 font-bold text-primary-800 dark:text-primary-200' : 'bg-secondary-100/50 dark:bg-secondary-800/50 hover:bg-secondary-200/50 dark:hover:bg-secondary-700/50 text-secondary-700 dark:text-secondary-300'}`}
                     aria-current={currentPage === idx + 1 ? 'page' : undefined}
                   >
                     {idx + 1}
@@ -312,7 +312,7 @@ const PeopleList = () => {
                 ))}
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1 mx-1 rounded bg-secondary-100 hover:bg-secondary-200"
+                  className="px-3 py-1 mx-1 rounded bg-secondary-100/50 dark:bg-secondary-800/50 hover:bg-secondary-200/50 dark:hover:bg-secondary-700/50 text-secondary-700 dark:text-secondary-300 transition-colors-ease glass-border"
                   disabled={currentPage === totalPages}
                   aria-label="Next Page"
                 >
@@ -331,18 +331,18 @@ const PeopleList = () => {
               deleteError :
               selectedPerson ?
                 <>
-                  <p className="text-secondary-700 mb-2">Are you sure you want to delete {selectedPerson.name}?</p>
+                  <p className="text-secondary-700 dark:text-secondary-300 mb-2">Are you sure you want to delete {selectedPerson.name}?</p>
                   {parseFloat(selectedPerson.balance) !== 0 && (
-                    <div className="bg-primary-50 rounded-2xl p-4 border border-primary-100 mb-3">
+                    <div className="bg-primary-50/50 dark:bg-primary-900/50 rounded-2xl p-4 border border-primary-100/50 dark:border-primary-800/50 glass-border">
                       <div className="flex justify-between items-center">
-                        <span className="text-secondary-600 font-medium">Current Balance:</span>
-                        <span className={parseFloat(selectedPerson.balance) > 0 ? 'text-success-600 font-medium' : 'text-danger-600 font-medium'}>
+                        <span className="text-secondary-600 dark:text-secondary-400 font-medium">Current Balance:</span>
+                        <span className={parseFloat(selectedPerson.balance) > 0 ? 'text-success-600 dark:text-success-400 font-medium' : 'text-danger-600 dark:text-danger-400 font-medium'}>
                           {formatCurrency(parseFloat(selectedPerson.balance))}
                         </span>
                       </div>
                     </div>
                   )}
-                  <p className="mt-3 text-red-600 text-sm font-semibold flex items-center">
+                  <p className="mt-3 text-red-600 dark:text-red-400 text-sm font-semibold flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.866-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
